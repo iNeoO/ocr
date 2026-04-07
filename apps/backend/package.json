@@ -1,0 +1,29 @@
+{
+  "name": "@ocr/backend",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "exports": {
+    "./appRouter": {
+      "types": "./src/appRouter.ts",
+      "default": "./src/appRouter.ts"
+    }
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.33.0",
+  "dependencies": {
+    "@ocr/db": "workspace:*",
+    "@ocr/infra": "workspace:*",
+    "@ocr/services": "workspace:*",
+    "@trpc/server": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:"
+  }
+}

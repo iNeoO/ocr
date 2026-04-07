@@ -1,0 +1,18 @@
+packages:
+  - apps/*
+  - packages/*
+  - db
+  - workers/*
+  - scripts
+allowBuilds:
+  esbuild: true
+
+catalog:
+  '@biomejs/biome': ^2.4.10
+  "@trpc/client": ^11.16.0
+  "@trpc/server": ^11.16.0
+  '@types/amqplib': ^0.10.8
+  '@types/node': ^24.10.1
+  amqplib: ^0.10.9
+  typescript: ^5.9.3
+  zod: ^4.3.6

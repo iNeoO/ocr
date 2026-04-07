@@ -1,0 +1,27 @@
+{
+  "name": "ocr",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "db:build": "dotenv -e .env -- pnpm --filter @ocr/db build",
+    "db:drop": "dotenv -e .env -- pnpm --filter @ocr/db drop",
+    "db:pull": "dotenv -e .env -- pnpm --filter @ocr/db pull",
+    "db:generate": "dotenv -e .env -- pnpm --filter @ocr/db generate",
+    "db:migrate": "dotenv -e .env -- pnpm --filter @ocr/db migrate",
+    "db:deploy": "dotenv -e .env -- pnpm --filter @ocr/db deploy",
+    "db:reset": "dotenv -e .env -- pnpm --filter @ocr/db reset",
+    "scripts:generate-openapi": "pnpm --filter @ocr/scripts generate-openapi",
+    "scripts:serve-openapi": "pnpm --filter @ocr/scripts serve-openapi"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.33.0",
+  "dependencies": {
+    "dotenv-cli": "^11.0.0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

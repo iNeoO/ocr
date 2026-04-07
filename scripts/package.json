@@ -1,0 +1,22 @@
+{
+  "name": "@ocr/scripts",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "generate-openapi": "node ./src/generate-openapi.ts",
+    "serve-openapi": "node ./src/serve-openapi.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.33.0",
+  "dependencies": {
+    "@hey-api/openapi-ts": "^0.95.0",
+    "@trpc/openapi": "11.13.1-alpha",
+    "superjson": "^2.2.6"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:"
+  }
+}
