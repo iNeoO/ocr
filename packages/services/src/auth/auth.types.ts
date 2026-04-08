@@ -15,6 +15,7 @@ export type SignInWithEmailAndPasswordInput = {
 	password: string;
 	callbackURL?: string;
 	rememberMe?: boolean;
+	headers?: Headers;
 };
 
 export type SignUpWithEmailAndPasswordInput = {
@@ -24,6 +25,7 @@ export type SignUpWithEmailAndPasswordInput = {
 	image?: string;
 	callbackURL?: string;
 	rememberMe?: boolean;
+	headers?: Headers;
 };
 
 export type SignOutInput = {

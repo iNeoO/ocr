@@ -12,7 +12,6 @@
   "license": "ISC",
   "packageManager": "pnpm@10.33.0",
   "dependencies": {
-    "@hey-api/openapi-ts": "^0.95.0",
     "@trpc/openapi": "11.13.1-alpha",
     "superjson": "^2.2.6"
   },

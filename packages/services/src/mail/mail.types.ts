@@ -1,8 +1,3 @@
-export type MailServiceOptions = {
-	apiKey: string;
-	from: string;
-};
-
 export type SendMailInput = {
 	to: string;
 	subject: string;

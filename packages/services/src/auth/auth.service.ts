@@ -3,6 +3,9 @@ import { env } from "@ocr/infra/configs";
 import type { RedisClient } from "@ocr/infra/redis";
 import type { MailService } from "../mail/mail.service.js";
 import { type AppAuth, createAuth } from "./auth.js";
+
+export { APIError, isAPIError } from "better-auth/api";
+
 import type {
 	AuthServiceOptions,
 	GetSessionInput,
@@ -39,8 +42,11 @@ export class AuthService {
 		password,
 		callbackURL,
 		rememberMe,
+		headers,
 	}: SignInWithEmailAndPasswordInput) {
 		return this.auth.api.signInEmail({
+			...(headers ? { headers } : {}),
+			returnHeaders: true,
 			body: {
 				email,
 				password,
@@ -57,8 +63,11 @@ export class AuthService {
 		image,
 		callbackURL,
 		rememberMe,
+		headers,
 	}: SignUpWithEmailAndPasswordInput) {
 		return this.auth.api.signUpEmail({
+			...(headers ? { headers } : {}),
+			returnHeaders: true,
 			body: {
 				name,
 				email,
@@ -72,6 +81,7 @@ export class AuthService {
 
 	signOut({ headers }: SignOutInput) {
 		return this.auth.api.signOut({
+			returnHeaders: true,
 			headers,
 		});
 	}

@@ -24,64 +24,108 @@
                       "type": "object",
                       "properties": {
                         "data": {
-                          "type": "object",
-                          "properties": {
-                            "redirect": {
-                              "type": "boolean"
-                            },
-                            "token": {
-                              "type": "string"
-                            },
-                            "url": {
-                              "type": "string"
-                            },
-                            "user": {
+                          "oneOf": [
+                            {
                               "type": "object",
                               "properties": {
-                                "id": {
-                                  "type": "string"
+                                "session": {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "type": "string"
+                                    },
+                                    "createdAt": {
+                                      "type": "string",
+                                      "format": "date-time"
+                                    },
+                                    "updatedAt": {
+                                      "type": "string",
+                                      "format": "date-time"
+                                    },
+                                    "userId": {
+                                      "type": "string"
+                                    },
+                                    "expiresAt": {
+                                      "type": "string",
+                                      "format": "date-time"
+                                    },
+                                    "token": {
+                                      "type": "string"
+                                    },
+                                    "ipAddress": {
+                                      "type": [
+                                        "string",
+                                        "null"
+                                      ]
+                                    },
+                                    "userAgent": {
+                                      "type": [
+                                        "string",
+                                        "null"
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "id",
+                                    "createdAt",
+                                    "updatedAt",
+                                    "userId",
+                                    "expiresAt",
+                                    "token"
+                                  ],
+                                  "additionalProperties": false
                                 },
-                                "createdAt": {
-                                  "type": "string",
-                                  "format": "date-time"
-                                },
-                                "updatedAt": {
-                                  "type": "string",
-                                  "format": "date-time"
-                                },
-                                "email": {
-                                  "type": "string"
-                                },
-                                "emailVerified": {
-                                  "type": "boolean"
-                                },
-                                "name": {
-                                  "type": "string"
-                                },
-                                "image": {
-                                  "type": [
-                                    "string",
-                                    "null"
-                                  ]
+                                "user": {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "type": "string"
+                                    },
+                                    "createdAt": {
+                                      "type": "string",
+                                      "format": "date-time"
+                                    },
+                                    "updatedAt": {
+                                      "type": "string",
+                                      "format": "date-time"
+                                    },
+                                    "email": {
+                                      "type": "string"
+                                    },
+                                    "emailVerified": {
+                                      "type": "boolean"
+                                    },
+                                    "name": {
+                                      "type": "string"
+                                    },
+                                    "image": {
+                                      "type": [
+                                        "string",
+                                        "null"
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "id",
+                                    "createdAt",
+                                    "updatedAt",
+                                    "email",
+                                    "emailVerified",
+                                    "name"
+                                  ],
+                                  "additionalProperties": false
                                 }
                               },
                               "required": [
-                                "id",
-                                "createdAt",
-                                "updatedAt",
-                                "email",
-                                "emailVerified",
-                                "name"
+                                "session",
+                                "user"
                               ],
                               "additionalProperties": false
+                            },
+                            {
+                              "type": "null"
                             }
-                          },
-                          "required": [
-                            "redirect",
-                            "token",
-                            "user"
-                          ],
-                          "additionalProperties": false
+                          ]
                         }
                       },
                       "required": [
@@ -153,8 +197,52 @@
                             {
                               "type": "object",
                               "properties": {
-                                "token": {
-                                  "type": "null"
+                                "session": {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "type": "string"
+                                    },
+                                    "createdAt": {
+                                      "type": "string",
+                                      "format": "date-time"
+                                    },
+                                    "updatedAt": {
+                                      "type": "string",
+                                      "format": "date-time"
+                                    },
+                                    "userId": {
+                                      "type": "string"
+                                    },
+                                    "expiresAt": {
+                                      "type": "string",
+                                      "format": "date-time"
+                                    },
+                                    "token": {
+                                      "type": "string"
+                                    },
+                                    "ipAddress": {
+                                      "type": [
+                                        "string",
+                                        "null"
+                                      ]
+                                    },
+                                    "userAgent": {
+                                      "type": [
+                                        "string",
+                                        "null"
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "id",
+                                    "createdAt",
+                                    "updatedAt",
+                                    "userId",
+                                    "expiresAt",
+                                    "token"
+                                  ],
+                                  "additionalProperties": false
                                 },
                                 "user": {
                                   "type": "object",
@@ -198,63 +286,13 @@
                                 }
                               },
                               "required": [
-                                "token",
+                                "session",
                                 "user"
                               ],
                               "additionalProperties": false
                             },
                             {
-                              "type": "object",
-                              "properties": {
-                                "token": {
-                                  "type": "string"
-                                },
-                                "user": {
-                                  "type": "object",
-                                  "properties": {
-                                    "id": {
-                                      "type": "string"
-                                    },
-                                    "createdAt": {
-                                      "type": "string",
-                                      "format": "date-time"
-                                    },
-                                    "updatedAt": {
-                                      "type": "string",
-                                      "format": "date-time"
-                                    },
-                                    "email": {
-                                      "type": "string"
-                                    },
-                                    "emailVerified": {
-                                      "type": "boolean"
-                                    },
-                                    "name": {
-                                      "type": "string"
-                                    },
-                                    "image": {
-                                      "type": [
-                                        "string",
-                                        "null"
-                                      ]
-                                    }
-                                  },
-                                  "required": [
-                                    "id",
-                                    "createdAt",
-                                    "updatedAt",
-                                    "email",
-                                    "emailVerified",
-                                    "name"
-                                  ],
-                                  "additionalProperties": false
-                                }
-                              },
-                              "required": [
-                                "token",
-                                "user"
-                              ],
-                              "additionalProperties": false
+                              "type": "null"
                             }
                           ]
                         }
@@ -784,10 +822,222 @@
           }
         }
       }
+    },
+    "/health": {
+      "get": {
+        "operationId": "health",
+        "tags": [
+          "health"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "result": {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "status": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "status"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "result"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/files.upload": {
+      "post": {
+        "operationId": "files.upload",
+        "tags": [
+          "files"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "result": {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "message": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "message"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "result"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/File"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/files.test": {
+      "get": {
+        "operationId": "files.test",
+        "tags": [
+          "files"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "result": {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "message": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "message"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "result"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "File": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "The **`type`** read-only property of the Blob interface returns the MIME type of the file.\n\n[MDN Reference](https://developer.mozilla.org/docs/Web/API/Blob/type)"
+          },
+          "size": {
+            "type": "number",
+            "description": "The **`size`** read-only property of the Blob interface returns the size of the Blob or File in bytes.\n\n[MDN Reference](https://developer.mozilla.org/docs/Web/API/Blob/size)"
+          },
+          "lastModified": {
+            "type": "number",
+            "description": "The **`lastModified`** read-only property of the File interface provides the last modified date of the file as the number of milliseconds since the Unix epoch (January 1, 1970 at midnight). Files without a known last modified date return the current date.\n\n[MDN Reference](https://developer.mozilla.org/docs/Web/API/File/lastModified)"
+          },
+          "name": {
+            "type": "string",
+            "description": "The **`name`** read-only property of the File interface returns the name of the file represented by a File object. For security reasons, the path is excluded from this property.\n\n[MDN Reference](https://developer.mozilla.org/docs/Web/API/File/name)"
+          },
+          "webkitRelativePath": {
+            "type": "string",
+            "description": "The **`webkitRelativePath`** read-only property of the File interface contains a string which specifies the file's path relative to the directory selected by the user in an <input> element with its webkitdirectory attribute set.\n\n[MDN Reference](https://developer.mozilla.org/docs/Web/API/File/webkitRelativePath)"
+          },
+          "arrayBuffer": {
+            "type": "object",
+            "description": "The **`arrayBuffer()`** method of the Blob interface returns a Promise that resolves with the contents of the blob as binary data contained in an ArrayBuffer.\n\n[MDN Reference](https://developer.mozilla.org/docs/Web/API/Blob/arrayBuffer)"
+          },
+          "bytes": {
+            "type": "object",
+            "description": "The **`bytes()`** method of the Blob interface returns a Promise that resolves with a Uint8Array containing the contents of the blob as an array of bytes.\n\n[MDN Reference](https://developer.mozilla.org/docs/Web/API/Blob/bytes)"
+          },
+          "slice": {
+            "type": "object",
+            "description": "The **`slice()`** method of the Blob interface creates and returns a new Blob object which contains data from a subset of the blob on which it's called.\n\n[MDN Reference](https://developer.mozilla.org/docs/Web/API/Blob/slice)"
+          },
+          "stream": {
+            "type": "object",
+            "description": "The **`stream()`** method of the Blob interface returns a ReadableStream which upon reading returns the data contained within the Blob.\n\n[MDN Reference](https://developer.mozilla.org/docs/Web/API/Blob/stream)"
+          },
+          "text": {
+            "type": "object",
+            "description": "The **`text()`** method of the Blob interface returns a Promise that resolves with a string containing the contents of the blob, interpreted as UTF-8.\n\n[MDN Reference](https://developer.mozilla.org/docs/Web/API/Blob/text)"
+          }
+        },
+        "required": [
+          "type",
+          "size",
+          "lastModified",
+          "name",
+          "webkitRelativePath",
+          "arrayBuffer",
+          "bytes",
+          "slice",
+          "stream",
+          "text"
+        ],
+        "additionalProperties": false
+      },
       "DefaultErrorShape": {
         "type": "object",
         "properties": {

@@ -1,30 +1,25 @@
 import { env } from "@ocr/infra/configs";
 import { Resend } from "resend";
-
-import {
-	getResetPasswordEmailTemplate,
-} from "./templates/reset-password-email.template.js";
-import {
-	getVerificationEmailTemplate,
-} from "./templates/verification-email.template.js";
 import type {
-	MailServiceOptions,
 	SendMailInput,
 	SendResetPasswordEmailInput,
 	SendVerificationEmailInput,
 } from "./mail.types.js";
+import { getResetPasswordEmailTemplate } from "./templates/reset-password-email.template.js";
+import { getVerificationEmailTemplate } from "./templates/verification-email.template.js";
 
 export class MailService {
 	private readonly resend: Resend;
 	private readonly from: string;
 
-	constructor({ apiKey, from }: MailServiceOptions) {
-		this.resend = new Resend(apiKey);
-		this.from = from;
+	constructor() {
+		this.resend = new Resend(env.RESEND_API_KEY);
+		this.from = env.RESEND_FROM_EMAIL;
 	}
 
 	async send({ to, subject, html }: SendMailInput) {
-		const recipient = env.NODE_ENV === "production" ? to : "delivered@resend.dev";
+		const recipient =
+			env.NODE_ENV === "production" ? to : "delivered@resend.dev";
 
 		await this.resend.emails.send({
 			from: this.from,

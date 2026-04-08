@@ -24,6 +24,7 @@ export const createAuth = ({
 		...(secret ? { secret } : {}),
 		...(url ? { url } : {}),
 		emailVerification: {
+			sendOnSignUp: true,
 			sendVerificationEmail: ({ user, url: verificationUrl }) =>
 				mailService.sendVerificationEmail({
 					to: user.email,

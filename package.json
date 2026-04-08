@@ -4,6 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "backend:dev": "dotenv -e .env -- pnpm --filter @ocr/backend dev",
+    "backend:build": "dotenv -e .env -- pnpm --filter @ocr/backend build",
     "db:build": "dotenv -e .env -- pnpm --filter @ocr/db build",
     "db:drop": "dotenv -e .env -- pnpm --filter @ocr/db drop",
     "db:pull": "dotenv -e .env -- pnpm --filter @ocr/db pull",

@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const signInWithEmailAndPasswordInput = z.object({
-	email: z.string().email(),
+	email: z.email(),
 	password: z.string().min(1),
 	callbackURL: z.string().optional(),
 	rememberMe: z.boolean().optional(),
@@ -9,7 +9,7 @@ export const signInWithEmailAndPasswordInput = z.object({
 
 export const signUpWithEmailAndPasswordInput = z.object({
 	name: z.string().min(1),
-	email: z.string().email(),
+	email: z.email(),
 	password: z.string().min(1),
 	image: z.string().optional(),
 	callbackURL: z.string().optional(),
@@ -17,7 +17,7 @@ export const signUpWithEmailAndPasswordInput = z.object({
 });
 
 export const requestPasswordResetInput = z.object({
-	email: z.string().email(),
+	email: z.email(),
 	redirectTo: z.string().optional(),
 });
 
@@ -32,6 +32,6 @@ export const verifyEmailInput = z.object({
 });
 
 export const sendVerificationEmailInput = z.object({
-	email: z.string().email(),
+	email: z.email(),
 	callbackURL: z.string().optional(),
 });

@@ -1,18 +1,19 @@
-import type { Database } from "@ocr/db";
-import type { RedisClient } from "@ocr/infra/redis";
-
+import type { AuthService } from "@ocr/services";
 import { AuthRouterBuilder } from "./feature/auth/auth.router.js";
-import { router } from "./trpc.js";
+import { FilesRouterBuilder } from "./feature/files/files.router.js";
+import { loggedProcedure, router } from "./trpc.js";
 
 export class AppRouterBuilder {
-	constructor(
-		private readonly db: Database,
-		private readonly redis: RedisClient,
-	) {}
+	private authService: AuthService;
+	constructor(authService: AuthService) {
+		this.authService = authService;
+	}
 
 	create() {
 		return router({
-			auth: new AuthRouterBuilder(this.db, this.redis).create(),
+			auth: new AuthRouterBuilder(this.authService).create(),
+			health: loggedProcedure.query(() => ({ status: "ok" })),
+			files: new FilesRouterBuilder().create(),
 		});
 	}
 }

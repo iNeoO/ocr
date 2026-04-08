@@ -1,35 +1,110 @@
 import { randomUUID } from "node:crypto";
-
-import type { CreateHTTPContextOptions } from "@trpc/server/adapters/standalone";
-import { createHttpLogger } from "@ocr/infra/libs";
+import type { IncomingMessage, ServerResponse } from "node:http";
+import {
+	createHttpLogger,
+	loggerStorage,
+	logHttpCompletion,
+} from "@ocr/infra/libs";
+import type { AuthService } from "@ocr/services";
 import { initTRPC } from "@trpc/server";
+import type { NodeHTTPCreateContextFnOptions } from "@trpc/server/adapters/node-http";
+import { ZodError, z } from "zod";
+import { createUnauthorizedError } from "./helpers/errors.helpers.js";
+import { toHeaders } from "./helpers/headers.helpers.js";
 
 const UNKNOWN_VALUE = "unknown";
 
-export const createContext = ({ req, res }: CreateHTTPContextOptions) => {
-	const userAgent = Array.isArray(req.headers["user-agent"])
-		? req.headers["user-agent"][0] || UNKNOWN_VALUE
-		: req.headers["user-agent"] || UNKNOWN_VALUE;
+export class ContextBuilder {
+	private authService: AuthService;
+	constructor(authService: AuthService) {
+		this.authService = authService;
+	}
 
-	const logger = createHttpLogger({
-		reqId: randomUUID(),
-		trpc: {
-			path: UNKNOWN_VALUE,
-			type: UNKNOWN_VALUE,
-		},
-		userAgent,
-	});
+	create() {
+		return async ({
+			req,
+			res,
+		}: NodeHTTPCreateContextFnOptions<IncomingMessage, ServerResponse>) => {
+			const authSession = await this.authService.getSession({
+				headers: toHeaders(req.headers),
+			});
 
-	return {
-		req,
-		res,
-		logger,
-	};
-};
+			const userAgent = Array.isArray(req.headers["user-agent"])
+				? req.headers["user-agent"][0] || UNKNOWN_VALUE
+				: req.headers["user-agent"] || UNKNOWN_VALUE;
 
-export type Context = Awaited<ReturnType<typeof createContext>>;
+			const logger = createHttpLogger({
+				reqId: randomUUID(),
+				trpc: {
+					path: UNKNOWN_VALUE,
+					type: UNKNOWN_VALUE,
+				},
+				userAgent,
+			});
 
-const t = initTRPC.context<Context>().create();
+			return {
+				req,
+				res,
+				logger,
+				user: authSession?.user,
+			};
+		};
+	}
+}
+
+export type Context = Awaited<ReturnType<ContextBuilder["create"]>>;
+
+const t = initTRPC.context<Context>().create({
+	errorFormatter(opts) {
+		return {
+			...opts.shape,
+			data: {
+				zodError:
+					opts.error.code === "BAD_REQUEST" &&
+					opts.error.cause instanceof ZodError
+						? z.treeifyError(opts.error.cause)
+						: null,
+				...opts.shape.data,
+			},
+		};
+	},
+});
 
 export const router = t.router;
 export const publicProcedure = t.procedure;
+
+export const loggedProcedure = publicProcedure.use(async (opts) => {
+	const startedAt = Date.now();
+	const logger = opts.ctx.logger.child({
+		trpc: {
+			path: opts.path || UNKNOWN_VALUE,
+			type: opts.type || UNKNOWN_VALUE,
+		},
+	});
+
+	return loggerStorage.run(logger, async () => {
+		try {
+			return await opts.next({
+				ctx: {
+					...opts.ctx,
+					logger,
+				},
+			});
+		} finally {
+			const durationMs = Date.now() - startedAt;
+			logHttpCompletion(logger, opts.ctx.res.statusCode, durationMs);
+		}
+	});
+});
+
+export const loggedProtectedProcedure = loggedProcedure.use(({ ctx, next }) => {
+	if (!ctx.user?.id) {
+		throw createUnauthorizedError();
+	}
+	return next({
+		ctx: {
+			...ctx,
+			user: ctx.user,
+		},
+	});
+});

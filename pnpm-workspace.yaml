@@ -16,3 +16,4 @@ catalog:
   amqplib: ^0.10.9
   typescript: ^5.9.3
   zod: ^4.3.6
+  tsx: "^4.21.0"

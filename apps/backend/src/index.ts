@@ -1,15 +1,67 @@
-import { db } from "@ocr/db";
-import { redis } from "@ocr/infra/redis";
-import { createHTTPServer } from "@trpc/server/adapters/standalone";
+import { createServer } from "node:http";
+import { pinoLogger } from "@ocr/infra";
+import { env } from "@ocr/infra/configs";
+import { nodeHTTPRequestHandler } from "@trpc/server/adapters/node-http";
 
 import { AppRouterBuilder } from "./appRouter.js";
-import { createContext } from "./trpc.js";
+import { getOpenApiHtml, getOpenApiJson } from "./libs/openapi.lib.js";
+import { services } from "./services/container.js";
+import { ContextBuilder } from "./trpc.js";
 
-const appRouter = new AppRouterBuilder(db, redis).create();
+const appRouter = new AppRouterBuilder(services.authService).create();
+const shouldExposeOpenApiUi = env.NODE_ENV !== "production";
 
-const server = createHTTPServer({
-	router: appRouter,
-	createContext,
+const server = createServer((req, res) => {
+	if (req.url === "/openapi.json") {
+		if (!shouldExposeOpenApiUi) {
+			res.writeHead(404);
+			res.end();
+			return;
+		}
+		res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
+		res.end(getOpenApiJson());
+		return;
+	}
+
+	if (req.url === "/openapi") {
+		if (!shouldExposeOpenApiUi) {
+			res.writeHead(404);
+			res.end();
+			return;
+		}
+
+		res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
+		res.end(getOpenApiHtml());
+		return;
+	}
+
+	void nodeHTTPRequestHandler({
+		req,
+		res,
+		router: appRouter,
+		createContext: new ContextBuilder(services.authService).create(),
+		path: req.url?.replace(/^\//, "") ?? "",
+	});
 });
 
 server.listen(3000);
+
+const gracefulShutdown = async (signal: string) => {
+	pinoLogger.info(`${signal} received. Graceful shutdown initiated.`);
+	await new Promise<void>((resolve, reject) => {
+		server.close((err) => {
+			if (err) {
+				reject(err);
+			} else {
+				pinoLogger.info("HTTP server closed");
+				resolve();
+			}
+		});
+	});
+
+	await services.db.$client.end();
+	await services.redis.quit();
+};
+
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));
