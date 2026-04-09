@@ -1,4 +1,5 @@
 @import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap");
+@import "@radix-ui/themes/styles.css";
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
@@ -7,70 +8,70 @@
 }
 
 :root {
-  --sea-ink: #173a40;
-  --sea-ink-soft: #416166;
-  --lagoon: #4fb8b2;
-  --lagoon-deep: #328f97;
-  --palm: #2f6a4a;
-  --sand: #e7f0e8;
-  --foam: #f3faf5;
+  --sea-ink: #3d1f0f;
+  --sea-ink-soft: #7a4a2a;
+  --lagoon: #fb923c;
+  --lagoon-deep: #f97316;
+  --palm: #b45309;
+  --sand: #fff4e6;
+  --foam: #fff9f2;
   --surface: rgba(255, 255, 255, 0.74);
   --surface-strong: rgba(255, 255, 255, 0.9);
-  --line: rgba(23, 58, 64, 0.14);
+  --line: rgba(111, 58, 27, 0.2);
   --inset-glint: rgba(255, 255, 255, 0.82);
-  --kicker: rgba(47, 106, 74, 0.9);
-  --bg-base: #e7f3ec;
-  --header-bg: rgba(251, 255, 248, 0.84);
+  --kicker: rgba(180, 83, 9, 0.9);
+  --bg-base: #fff4e8;
+  --header-bg: rgba(255, 248, 240, 0.9);
   --chip-bg: rgba(255, 255, 255, 0.8);
-  --chip-line: rgba(47, 106, 74, 0.18);
+  --chip-line: rgba(180, 83, 9, 0.28);
   --link-bg-hover: rgba(255, 255, 255, 0.9);
-  --hero-a: rgba(79, 184, 178, 0.36);
-  --hero-b: rgba(47, 106, 74, 0.2);
+  --hero-a: rgba(249, 115, 22, 0.28);
+  --hero-b: rgba(251, 146, 60, 0.2);
 }
 
 :root[data-theme="dark"] {
   --sea-ink: #d7ece8;
   --sea-ink-soft: #afcdc8;
-  --lagoon: #60d7cf;
-  --lagoon-deep: #8de5db;
-  --palm: #6ec89a;
+  --lagoon: #fdba74;
+  --lagoon-deep: #fb923c;
+  --palm: #f97316;
   --sand: #0f1a1e;
   --foam: #101d22;
   --surface: rgba(16, 30, 34, 0.8);
   --surface-strong: rgba(15, 27, 31, 0.92);
-  --line: rgba(141, 229, 219, 0.18);
+  --line: rgba(253, 186, 116, 0.22);
   --inset-glint: rgba(194, 247, 238, 0.14);
-  --kicker: #b8efe5;
-  --bg-base: #0a1418;
-  --header-bg: rgba(10, 20, 24, 0.8);
+  --kicker: #fed7aa;
+  --bg-base: #1c130d;
+  --header-bg: rgba(28, 19, 13, 0.84);
   --chip-bg: rgba(13, 28, 32, 0.9);
-  --chip-line: rgba(141, 229, 219, 0.24);
+  --chip-line: rgba(253, 186, 116, 0.3);
   --link-bg-hover: rgba(24, 44, 49, 0.8);
-  --hero-a: rgba(96, 215, 207, 0.18);
-  --hero-b: rgba(110, 200, 154, 0.12);
+  --hero-a: rgba(251, 146, 60, 0.2);
+  --hero-b: rgba(249, 115, 22, 0.14);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --sea-ink: #d7ece8;
     --sea-ink-soft: #afcdc8;
-    --lagoon: #60d7cf;
-    --lagoon-deep: #8de5db;
-    --palm: #6ec89a;
+    --lagoon: #fdba74;
+    --lagoon-deep: #fb923c;
+    --palm: #f97316;
     --sand: #0f1a1e;
     --foam: #101d22;
     --surface: rgba(16, 30, 34, 0.8);
     --surface-strong: rgba(15, 27, 31, 0.92);
-    --line: rgba(141, 229, 219, 0.18);
+    --line: rgba(253, 186, 116, 0.22);
     --inset-glint: rgba(194, 247, 238, 0.14);
-    --kicker: #b8efe5;
-    --bg-base: #0a1418;
-    --header-bg: rgba(10, 20, 24, 0.8);
+    --kicker: #fed7aa;
+    --bg-base: #1c130d;
+    --header-bg: rgba(28, 19, 13, 0.84);
     --chip-bg: rgba(13, 28, 32, 0.9);
-    --chip-line: rgba(141, 229, 219, 0.24);
+    --chip-line: rgba(253, 186, 116, 0.3);
     --link-bg-hover: rgba(24, 44, 49, 0.8);
-    --hero-a: rgba(96, 215, 207, 0.18);
-    --hero-b: rgba(110, 200, 154, 0.12);
+    --hero-a: rgba(251, 146, 60, 0.2);
+    --hero-b: rgba(249, 115, 22, 0.14);
   }
 }
 
@@ -92,7 +93,7 @@ body {
   background:
     radial-gradient(1100px 620px at -8% -10%, var(--hero-a), transparent 58%),
     radial-gradient(1050px 620px at 112% -12%, var(--hero-b), transparent 62%),
-    radial-gradient(720px 380px at 50% 115%, rgba(79, 184, 178, 0.1), transparent 68%),
+    radial-gradient(720px 380px at 50% 115%, rgba(249, 115, 22, 0.12), transparent 68%),
     linear-gradient(180deg, color-mix(in oklab, var(--sand) 68%, white) 0%, var(--foam) 44%, var(--bg-base) 100%);
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
@@ -108,8 +109,8 @@ body::before {
   opacity: 0.28;
   background:
     radial-gradient(circle at 20% 15%, rgba(255, 255, 255, 0.8), transparent 34%),
-    radial-gradient(circle at 78% 26%, rgba(79, 184, 178, 0.2), transparent 42%),
-    radial-gradient(circle at 42% 82%, rgba(47, 106, 74, 0.14), transparent 36%);
+    radial-gradient(circle at 78% 26%, rgba(249, 115, 22, 0.2), transparent 42%),
+    radial-gradient(circle at 42% 82%, rgba(180, 83, 9, 0.14), transparent 36%);
 }
 
 body::after {
@@ -134,7 +135,7 @@ a {
 }
 
 a:hover {
-  color: #246f76;
+  color: #c2410c;
 }
 
 code {
@@ -186,6 +187,42 @@ pre code {
   border-color: color-mix(in oklab, var(--lagoon-deep) 35%, var(--line));
 }
 
+.auth-hero-card {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(440px 220px at 0% 0%, color-mix(in oklab, var(--hero-a) 65%, white 35%), transparent 70%),
+    radial-gradient(420px 220px at 100% 100%, color-mix(in oklab, var(--hero-b) 72%, transparent 28%), transparent 72%),
+    linear-gradient(165deg, var(--surface-strong), var(--surface));
+  border: 1px solid var(--line);
+  box-shadow:
+    0 1px 0 var(--inset-glint) inset,
+    0 22px 44px rgba(30, 90, 72, 0.12),
+    0 6px 18px rgba(23, 58, 64, 0.08);
+}
+
+.auth-hero-card::before {
+  content: "";
+  position: absolute;
+  inset: auto -10% -35% auto;
+  width: 18rem;
+  height: 18rem;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(249, 115, 22, 0.2), transparent 68%);
+  pointer-events: none;
+}
+
+.auth-eyebrow {
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--kicker);
+}
+
+.auth-title {
+  max-width: 12ch;
+  line-height: 0.98;
+}
+
 button,
 .island-shell,
 a {
@@ -218,7 +255,7 @@ a {
   height: 2px;
   transform: scaleX(0);
   transform-origin: left;
-  background: linear-gradient(90deg, var(--lagoon), #7ed3bf);
+  background: linear-gradient(90deg, var(--lagoon), #fdba74);
   transition: transform 170ms ease;
 }
 

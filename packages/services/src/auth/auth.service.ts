@@ -33,7 +33,7 @@ export class AuthService {
 			redis: this.redis,
 			mailService: this.mailService,
 			secret: env.BETTER_AUTH_SECRET,
-			url: env.BETTER_AUTH_URL,
+			url: env.FRONTEND_URL,
 		});
 	}
 

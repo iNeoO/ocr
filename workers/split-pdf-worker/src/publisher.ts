@@ -1,0 +1,67 @@
+import { getLoggerStore } from "@ocr/infra";
+import amqp from "amqplib";
+import {
+	type SplitPdfJobData,
+	splitPdfJobDataSchema,
+} from "./contracts/split-pdf.schema";
+
+type SplitPdfPublisherOptions = {
+	amqpUrl: string;
+	queue: string;
+};
+
+export class SplitPdfPublisher {
+	private amqpUrl: string;
+	private queue: string;
+	private connection?: amqp.ChannelModel;
+	private channelPromise?: Promise<amqp.Channel>;
+
+	constructor(options: SplitPdfPublisherOptions) {
+		this.amqpUrl = options.amqpUrl;
+		this.queue = options.queue;
+	}
+
+	private async getChannel() {
+		if (!this.channelPromise) {
+			this.channelPromise = amqp
+				.connect(this.amqpUrl)
+				.then(async (connection) => {
+					this.connection = connection;
+					const channel = await connection.createChannel();
+					await channel.assertQueue(this.queue, { durable: true });
+					return channel;
+				})
+				.catch((error) => {
+					const logger = getLoggerStore();
+					logger.error({ err: error }, "Failed to connect to AMQP server");
+					this.channelPromise = undefined;
+					throw error;
+				});
+		}
+		return this.channelPromise;
+	}
+
+	async publish(message: SplitPdfJobData) {
+		const payload = splitPdfJobDataSchema.parse(message);
+		const channel = await this.getChannel();
+		channel.sendToQueue(this.queue, Buffer.from(JSON.stringify(payload)), {
+			persistent: true,
+			contentType: "application/json",
+		});
+	}
+
+	async close() {
+		const channelPromise = this.channelPromise;
+		this.channelPromise = undefined;
+		const channel = channelPromise
+			? await channelPromise.catch(() => null)
+			: null;
+		if (channel) {
+			await channel.close().catch(() => undefined);
+		}
+		if (this.connection) {
+			await this.connection.close().catch(() => undefined);
+			this.connection = undefined;
+		}
+	}
+}

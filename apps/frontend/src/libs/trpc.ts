@@ -4,7 +4,7 @@ import { createTRPCClient, httpLink } from "@trpc/client";
 export const trpc = createTRPCClient<AppRouter>({
 	links: [
 		httpLink({
-			url: "http://localhost:3000",
+			url: "/trpc",
 			fetch(url, options) {
 				return fetch(url, {
 					...options,
@@ -14,8 +14,3 @@ export const trpc = createTRPCClient<AppRouter>({
 		}),
 	],
 });
-
-const a = new FormData();
-a.append("file", new Blob(["Hello, world!"], { type: "text/plain" }));
-
-trpc.files.upload.mutate(a);

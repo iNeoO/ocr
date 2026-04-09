@@ -4,6 +4,7 @@ export const envSchema = z.object({
 	NODE_ENV: z
 		.enum(["development", "test", "production"])
 		.default("development"),
+	BACKEND_PORT: z.coerce.number(),
 	PG_OCR_DB: z.string(),
 	PG_OCR_USER: z.string(),
 	PG_OCR_PASSWORD: z.string(),
@@ -20,9 +21,11 @@ export const envSchema = z.object({
 	MINIO_REGION: z.string().default("us-east-1"),
 	MINIO_FORCE_PATH_STYLE: z.coerce.boolean().default(true),
 	BETTER_AUTH_SECRET: z.string().min(1),
-	BETTER_AUTH_URL: z.url(),
+	FRONTEND_URL: z.url(),
 	RESEND_API_KEY: z.string().min(1),
 	RESEND_FROM_EMAIL: z.email(),
+	AMQ_SPLIT_PDF_QUEUE: z.string().default("split-pdf-jobs"),
+	AMQ_SPLIT_PDF_PREFETCH: z.coerce.number().default(5),
 });
 
 export const env = envSchema.parse(process.env);

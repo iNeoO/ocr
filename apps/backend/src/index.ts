@@ -8,7 +8,10 @@ import { getOpenApiHtml, getOpenApiJson } from "./libs/openapi.lib.js";
 import { services } from "./services/container.js";
 import { ContextBuilder } from "./trpc.js";
 
-const appRouter = new AppRouterBuilder(services.authService).create();
+const appRouter = new AppRouterBuilder(
+	services.authService,
+	services.processesService,
+).create();
 const shouldExposeOpenApiUi = env.NODE_ENV !== "production";
 
 const server = createServer((req, res) => {
@@ -44,7 +47,7 @@ const server = createServer((req, res) => {
 	});
 });
 
-server.listen(3000);
+server.listen(env.BACKEND_PORT);
 
 const gracefulShutdown = async (signal: string) => {
 	pinoLogger.info(`${signal} received. Graceful shutdown initiated.`);

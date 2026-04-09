@@ -5,10 +5,13 @@
   "main": "index.js",
   "scripts": {
     "backend:dev": "dotenv -e .env -- pnpm --filter @ocr/backend dev",
+    "frontend:dev": "dotenv -e .env -- pnpm --filter @ocr/frontend dev",
+    "dev": "concurrently \"pnpm backend:dev\" \"pnpm frontend:dev\"",
     "backend:build": "dotenv -e .env -- pnpm --filter @ocr/backend build",
     "db:build": "dotenv -e .env -- pnpm --filter @ocr/db build",
     "db:drop": "dotenv -e .env -- pnpm --filter @ocr/db drop",
     "db:pull": "dotenv -e .env -- pnpm --filter @ocr/db pull",
+    "db:push": "dotenv -e .env -- pnpm --filter @ocr/db push",
     "db:generate": "dotenv -e .env -- pnpm --filter @ocr/db generate",
     "db:migrate": "dotenv -e .env -- pnpm --filter @ocr/db migrate",
     "db:deploy": "dotenv -e .env -- pnpm --filter @ocr/db deploy",

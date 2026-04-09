@@ -1,16 +1,15 @@
 import { randomUUID } from "node:crypto";
 import { type Database, schema } from "@ocr/db";
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import type {
 	CreateProcessInput,
-	ProcessServiceOptions,
 	UpdateProcessStatusInput,
 } from "./process.types.js";
 
 export class ProcessService {
 	private readonly db: Database;
 
-	constructor({ db }: ProcessServiceOptions) {
+	constructor(db: Database) {
 		this.db = db;
 	}
 
@@ -36,6 +35,31 @@ export class ProcessService {
 			where: (process, { eq }) => eq(process.id, id),
 		});
 		return process;
+	}
+
+	async getProcessesByUserId(userId: string) {
+		const processes = await this.db
+			.select({
+				id: schema.process.id,
+				userId: schema.process.userId,
+				sourceFileId: schema.process.sourceFileId,
+				zipFileId: schema.process.zipFileId,
+				status: schema.process.status,
+				pageCount: schema.process.pageCount,
+				completedPages: schema.process.completedPages,
+				createdAt: schema.process.createdAt,
+				startedAt: schema.process.startedAt,
+				updatedAt: schema.process.updatedAt,
+				completedAt: schema.process.completedAt,
+				errorAt: schema.process.errorAt,
+				error: schema.process.error,
+				sourceFileName: schema.file.filename,
+			})
+			.from(schema.process)
+			.innerJoin(schema.file, eq(schema.process.sourceFileId, schema.file.id))
+			.where(eq(schema.process.userId, userId))
+			.orderBy(desc(schema.process.createdAt));
+		return processes;
 	}
 
 	async updateProcessStatus({ id, status }: UpdateProcessStatusInput) {

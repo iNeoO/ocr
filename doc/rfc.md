@@ -31,11 +31,13 @@
 ## flow
 
 1. Post /file
-2. Upload on s3
-3. Create event in que for "split.to.pages"
-4. Split pages to png page, upload on s3, create event for "convert.page"
-5. On ever "convert.page" finished, update status of file
-6. when over propose a download of all pages ziped
+2. Upload on s3 (fileService.uploadFile)
+3. create process (process.createProcess)
+4. Create event in que for "split.to.pages"
+5. worker call (process.updateProcess), (fileservice.splitpdf)
+6. Split pages to png page, upload on s3, create event for "convert.page"
+7. On ever "convert.page" finished, update status of file
+8. when over propose a download of all pages ziped
 
 ## admin
 

@@ -1,11 +1,17 @@
 import { db } from "@ocr/db";
 import { redis } from "@ocr/infra/redis";
 
-import { AuthService, FilesService, MailService } from "@ocr/services";
+import {
+	AuthService,
+	FilesService,
+	MailService,
+	ProcessService,
+} from "@ocr/services";
 
 type AppServices = {
 	db: typeof db;
 	redis: typeof redis;
+	processesService: ProcessService;
 	mailService: MailService;
 	authService: AuthService;
 	filesService: FilesService;
@@ -18,6 +24,7 @@ export const createServices = (): AppServices => {
 		redis,
 		mailService,
 	});
+	const processesService = new ProcessService(db);
 	const filesService = new FilesService(db);
 
 	return {
@@ -26,6 +33,7 @@ export const createServices = (): AppServices => {
 		mailService,
 		authService,
 		filesService,
+		processesService,
 	};
 };
 

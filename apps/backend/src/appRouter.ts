@@ -1,12 +1,15 @@
-import type { AuthService } from "@ocr/services";
+import type { AuthService, ProcessService } from "@ocr/services";
 import { AuthRouterBuilder } from "./feature/auth/auth.router.js";
 import { FilesRouterBuilder } from "./feature/files/files.router.js";
+import { ProcessesRouterBuilder } from "./feature/processes/processes.router.js";
 import { loggedProcedure, router } from "./trpc.js";
 
 export class AppRouterBuilder {
 	private authService: AuthService;
-	constructor(authService: AuthService) {
+	private processesService: ProcessService;
+	constructor(authService: AuthService, processesService: ProcessService) {
 		this.authService = authService;
+		this.processesService = processesService;
 	}
 
 	create() {
@@ -14,6 +17,7 @@ export class AppRouterBuilder {
 			auth: new AuthRouterBuilder(this.authService).create(),
 			health: loggedProcedure.query(() => ({ status: "ok" })),
 			files: new FilesRouterBuilder().create(),
+			processes: new ProcessesRouterBuilder(this.processesService).create(),
 		});
 	}
 }
