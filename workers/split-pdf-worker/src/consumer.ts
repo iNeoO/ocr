@@ -5,7 +5,7 @@ import amqp from "amqplib";
 import {
 	parseRawMessage,
 	type SplitPdfJobData,
-} from "./contracts/split-pdf.schema";
+} from "./contracts/split-pdf.schema.js";
 
 type StartConsumerParams = {
 	handler: (message: SplitPdfJobData) => Promise<void>;

@@ -26,6 +26,7 @@ export const process = pgTable("process", {
 		.text("zip_file_id")
 		.references(() => file.id, { onDelete: "set null" }),
 	status: processStatus("status").notNull().default("pending"),
+	isRunning: t.boolean("is_running").notNull().default(false),
 	pageCount: t.integer("page_count").notNull().default(0),
 	completedPages: t.integer("completed_pages").notNull().default(0),
 	createdAt: t

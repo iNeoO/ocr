@@ -2,6 +2,7 @@ import { Theme } from "@radix-ui/themes";
 import {
 	createRootRouteWithContext,
 	HeadContent,
+	Link,
 	Scripts,
 } from "@tanstack/react-router";
 import Footer from "../components/Footer";
@@ -49,6 +50,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 		],
 	}),
 	shellComponent: RootDocument,
+	notFoundComponent: NotFoundPage,
 });
 
 function RootDocument({ children }: { children: React.ReactNode }) {
@@ -72,5 +74,27 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 				<Scripts />
 			</body>
 		</html>
+	);
+}
+
+function NotFoundPage() {
+	return (
+		<main className="page-wrap px-4 py-16 sm:py-24">
+			<div className="island-shell rounded-4xl px-6 py-10 sm:px-10 sm:py-14">
+				<p className="island-kicker mb-3">404</p>
+				<h1 className="display-title m-0 text-4xl sm:text-5xl">
+					Page not found
+				</h1>
+				<p className="mt-4 max-w-[48ch] text-(--sea-ink-soft)">
+					The page you requested does not exist or is no longer available.
+				</p>
+				<Link
+					to="/"
+					className="mt-6 inline-flex rounded-full border border-(--chip-line) bg-(--chip-bg) px-4 py-2 font-semibold text-(--sea-ink) no-underline"
+				>
+					Go back home
+				</Link>
+			</div>
+		</main>
 	);
 }

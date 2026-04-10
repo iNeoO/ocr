@@ -8,7 +8,6 @@ import {
 	Text,
 	TextField,
 } from "@radix-ui/themes";
-import { useServerFn } from "@tanstack/react-start";
 import {
 	createFileRoute,
 	Link as RouterLink,
@@ -16,10 +15,15 @@ import {
 	useNavigate,
 	useRouter,
 } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { AlertTriangle, Lock, Mail } from "lucide-react";
 import { useState } from "react";
 import { z } from "zod";
 import AuthShell from "../components/AuthShell";
+import {
+	type CalloutVariant,
+	getCalloutColor,
+} from "../helpers/colorChart.helper";
 import {
 	sendVerificationEmail,
 	signInWithEmailAndPassword,
@@ -30,7 +34,9 @@ const loginSchema = z.object({
 	password: z.string().min(1, "Enter your password."),
 });
 
-type LoginFieldErrors = Partial<Record<keyof z.infer<typeof loginSchema>, string>>;
+type LoginFieldErrors = Partial<
+	Record<keyof z.infer<typeof loginSchema>, string>
+>;
 
 export const Route = createFileRoute("/login")({
 	beforeLoad: ({ context }) => {
@@ -40,19 +46,6 @@ export const Route = createFileRoute("/login")({
 	},
 	component: RouteComponent,
 });
-
-function getCalloutColor(variant: "warning" | "error" | "info" | "success") {
-	switch (variant) {
-		case "warning":
-			return "amber";
-		case "success":
-			return "green";
-		case "info":
-			return "blue";
-		default:
-			return "red";
-	}
-}
 
 function getErrorMessage(error: unknown) {
 	return error instanceof Error ? error.message : "Login failed";
@@ -76,9 +69,7 @@ function RouteComponent() {
 	const [loginPassword, setLoginPassword] = useState("");
 	const [fieldErrors, setFieldErrors] = useState<LoginFieldErrors>({});
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
-	const [errorVariant, setErrorVariant] = useState<
-		"warning" | "error" | "info" | "success"
-	>("error");
+	const [errorVariant, setErrorVariant] = useState<CalloutVariant>("error");
 	const [canResendValidationEmail, setCanResendValidationEmail] =
 		useState(false);
 	const [resendSuccessMessage, setResendSuccessMessage] = useState<
@@ -87,7 +78,7 @@ function RouteComponent() {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [isResending, setIsResending] = useState(false);
 
-	const handleLogin = async (event: React.FormEvent) => {
+	const handleLogin = async (event: React.SubmitEvent) => {
 		event.preventDefault();
 		setErrorMessage(null);
 		setErrorVariant("error");

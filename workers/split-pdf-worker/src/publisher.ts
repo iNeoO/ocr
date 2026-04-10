@@ -3,7 +3,7 @@ import amqp from "amqplib";
 import {
 	type SplitPdfJobData,
 	splitPdfJobDataSchema,
-} from "./contracts/split-pdf.schema";
+} from "./contracts/split-pdf.schema.js";
 
 type SplitPdfPublisherOptions = {
 	amqpUrl: string;

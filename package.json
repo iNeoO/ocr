@@ -6,7 +6,11 @@
   "scripts": {
     "backend:dev": "dotenv -e .env -- pnpm --filter @ocr/backend dev",
     "frontend:dev": "dotenv -e .env -- pnpm --filter @ocr/frontend dev",
-    "dev": "concurrently \"pnpm backend:dev\" \"pnpm frontend:dev\"",
+    "cleanup-process-worker:dev": "dotenv -e .env -- pnpm --filter @ocr/cleanup-process-worker dev",
+    "split-pdf-worker:dev": "dotenv -e .env -- pnpm --filter @ocr/split-pdf-worker dev",
+    "transcribe-jpg-worker:dev": "dotenv -e .env -- pnpm --filter @ocr/transcribe-jpg-worker dev",
+    "workers:dev": "concurrently \"pnpm split-pdf-worker:dev\" \"pnpm transcribe-jpg-worker:dev\" \"pnpm cleanup-process-worker:dev\"",
+    "dev": "concurrently \"pnpm backend:dev\" \"pnpm frontend:dev\" \"pnpm workers:dev\"",
     "backend:build": "dotenv -e .env -- pnpm --filter @ocr/backend build",
     "db:build": "dotenv -e .env -- pnpm --filter @ocr/db build",
     "db:drop": "dotenv -e .env -- pnpm --filter @ocr/db drop",

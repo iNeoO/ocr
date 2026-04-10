@@ -21,11 +21,13 @@ export const envSchema = z.object({
 	MINIO_REGION: z.string().default("us-east-1"),
 	MINIO_FORCE_PATH_STYLE: z.coerce.boolean().default(true),
 	BETTER_AUTH_SECRET: z.string().min(1),
-	FRONTEND_URL: z.url(),
+	BETTER_AUTH_URL: z.url(),
 	RESEND_API_KEY: z.string().min(1),
 	RESEND_FROM_EMAIL: z.email(),
 	AMQ_SPLIT_PDF_QUEUE: z.string().default("split-pdf-jobs"),
 	AMQ_SPLIT_PDF_PREFETCH: z.coerce.number().default(5),
+	AMQ_TRANSCRIBE_JPG_QUEUE: z.string().default("transcribe-jpg-jobs"),
+	AMQ_TRANSCRIBE_JPG_PREFETCH: z.coerce.number().default(5),
 });
 
 export const env = envSchema.parse(process.env);

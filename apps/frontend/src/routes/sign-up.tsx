@@ -1,18 +1,11 @@
-import {
-	Box,
-	Button,
-	Callout,
-	Flex,
-	Text,
-	TextField,
-} from "@radix-ui/themes";
-import { useServerFn } from "@tanstack/react-start";
+import { Box, Button, Callout, Flex, Text, TextField } from "@radix-ui/themes";
 import {
 	createFileRoute,
 	redirect,
 	useNavigate,
 	useRouter,
 } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { Lock, Mail, User } from "lucide-react";
 import { useId, useState } from "react";
 import { z } from "zod";
@@ -25,7 +18,9 @@ const signUpSchema = z.object({
 	password: z.string().min(8, "Password must be at least 8 characters."),
 });
 
-type SignUpFieldErrors = Partial<Record<keyof z.infer<typeof signUpSchema>, string>>;
+type SignUpFieldErrors = Partial<
+	Record<keyof z.infer<typeof signUpSchema>, string>
+>;
 
 export const Route = createFileRoute("/sign-up")({
 	beforeLoad: ({ context }) => {
@@ -60,7 +55,7 @@ function RouteComponent() {
 	const [fieldErrors, setFieldErrors] = useState<SignUpFieldErrors>({});
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
-	const handleSignup = async (event: React.FormEvent) => {
+	const handleSignup = async (event: React.SubmitEvent) => {
 		event.preventDefault();
 		setErrorMessage(null);
 

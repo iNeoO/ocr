@@ -22,6 +22,8 @@
     "@ocr/db": "workspace:*",
     "@ocr/infra": "workspace:*",
     "@ocr/services": "workspace:*",
+    "@ocr/split-pdf-worker": "workspace:*",
+    "@ocr/transcribe-jpg-worker": "workspace:*",
     "@trpc/server": "catalog:",
     "zod": "catalog:",
     "zod-form-data": "^3.0.1"

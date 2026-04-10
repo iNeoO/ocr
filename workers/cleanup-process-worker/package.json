@@ -1,0 +1,30 @@
+{
+  "name": "@ocr/cleanup-process-worker",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch --clear-screen=false src/index.ts",
+    "start": "node dist/index.js",
+    "lint": "biome check",
+    "build": "rm -rf dist && tsc"
+  },
+  "dependencies": {
+    "@ocr/db": "workspace:*",
+    "@ocr/infra": "workspace:*",
+    "@ocr/services": "workspace:*",
+    "node-cron": "^4.2.1"
+  },
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./src/index.ts",
+        "default": "./src/index.ts"
+      }
+    }
+  },
+  "devDependencies": {
+    "@biomejs/biome": "catalog:",
+    "@types/node": "catalog:",
+    "tsx": "catalog:",
+    "typescript": "catalog:"
+  }
+}

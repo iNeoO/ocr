@@ -11,6 +11,7 @@ import { ContextBuilder } from "./trpc.js";
 const appRouter = new AppRouterBuilder(
 	services.authService,
 	services.processesService,
+	services.filesService,
 ).create();
 const shouldExposeOpenApiUi = env.NODE_ENV !== "production";
 
@@ -44,10 +45,22 @@ const server = createServer((req, res) => {
 		router: appRouter,
 		createContext: new ContextBuilder(services.authService).create(),
 		path: req.url?.replace(/^\//, "") ?? "",
+		onError({ error, path, type, input, ctx }) {
+			const logger = ctx?.logger ?? pinoLogger;
+			logger.error(
+				{
+					err: error,
+					trpc: {
+						path: path ?? "unknown",
+						type: type ?? "unknown",
+					},
+					input,
+				},
+				"tRPC handler error",
+			);
+		},
 	});
 });
-
-server.listen(env.BACKEND_PORT);
 
 const gracefulShutdown = async (signal: string) => {
 	pinoLogger.info(`${signal} received. Graceful shutdown initiated.`);
@@ -64,7 +77,12 @@ const gracefulShutdown = async (signal: string) => {
 
 	await services.db.$client.end();
 	await services.redis.quit();
+	await services.splitPdfPublisher.close();
+	await services.transcribeJpgPublisher.close();
 };
 
 process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
 process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+
+await services.init();
+server.listen(env.BACKEND_PORT);

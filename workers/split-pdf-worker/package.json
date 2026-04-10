@@ -12,19 +12,20 @@
     "@ocr/db": "workspace:*",
     "@ocr/infra": "workspace:*",
     "@ocr/services": "workspace:*",
+    "@ocr/transcribe-jpg-worker": "workspace:*",
     "zod": "catalog:"
   },
   "exports": {
     ".": {
       "import": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.js"
+        "types": "./src/index.ts",
+        "default": "./src/index.ts"
       }
     },
     "./publisher": {
       "import": {
-        "types": "./dist/publisher.d.ts",
-        "default": "./dist/publisher.js"
+        "types": "./src/publisher.ts",
+        "default": "./src/publisher.ts"
       }
     }
   },

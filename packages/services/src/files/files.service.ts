@@ -1,10 +1,20 @@
 import { randomUUID } from "node:crypto";
-import { GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
+import {
+	DeleteObjectCommand,
+	GetObjectCommand,
+	PutObjectCommand,
+} from "@aws-sdk/client-s3";
 import { type Database, schema } from "@ocr/db";
 import { getLoggerStore } from "@ocr/infra";
 import { s3, s3Config } from "@ocr/infra/s3";
+import { inArray } from "drizzle-orm";
 import { PDFParse } from "pdf-parse";
 import { fileToNodeStream } from "./files.helpers.js";
+
+export type SplitPageImage = {
+	pageNumber: number;
+	imageFileId: string;
+};
 
 export class FilesService {
 	private readonly db: Database;
@@ -24,6 +34,7 @@ export class FilesService {
 				Bucket: s3Config.bucket,
 				Key: objectKey,
 				Body: body,
+				ContentLength: uploadedFile.size,
 				ContentType: uploadedFile.type,
 			}),
 		);
@@ -53,18 +64,63 @@ export class FilesService {
 		return file;
 	}
 
+	async getFileBuffer(fileId: string) {
+		const file = await this.getFileById(fileId);
+		if (!file) {
+			throw new Error("File not found");
+		}
+
+		const response = await s3.send(
+			new GetObjectCommand({
+				Bucket: file.bucket,
+				Key: file.objectKey,
+			}),
+		);
+
+		if (!response.Body) {
+			throw new Error("File content not found in S3");
+		}
+
+		return response.Body.transformToByteArray();
+	}
+
+	async deleteFiles(fileIds: string[]) {
+		const uniqueFileIds = [...new Set(fileIds.filter(Boolean))];
+		if (uniqueFileIds.length === 0) {
+			return;
+		}
+
+		const files = await this.db
+			.select({
+				id: schema.file.id,
+				bucket: schema.file.bucket,
+				objectKey: schema.file.objectKey,
+			})
+			.from(schema.file)
+			.where(inArray(schema.file.id, uniqueFileIds));
+
+		for (const file of files) {
+			await s3.send(
+				new DeleteObjectCommand({
+					Bucket: file.bucket,
+					Key: file.objectKey,
+				}),
+			);
+		}
+
+		await this.db.delete(schema.file).where(inArray(schema.file.id, uniqueFileIds));
+	}
+
 	async splitFileIntoPages(fileId: string) {
 		const file = await this.getFileById(fileId);
 		if (!file) {
 			throw new Error("File not found");
 		}
 
-		const objectKey = `files/${file.id}/${file.filename}`;
-
 		const response = await s3.send(
 			new GetObjectCommand({
 				Bucket: s3Config.bucket,
-				Key: objectKey,
+				Key: file.objectKey,
 			}),
 		);
 
@@ -80,8 +136,8 @@ export class FilesService {
 			await parser.destroy();
 			isCleanedUp = true;
 
-			await Promise.all(
-				result.pages.map(async (page) => {
+			const createdPages = await Promise.all(
+				result.pages.map(async (page, index) => {
 					const pageId = randomUUID();
 					const pageObjectKey = `files/${file.id}/pages/${pageId}.png`;
 					const now = new Date();
@@ -106,8 +162,15 @@ export class FilesService {
 						createdAt: now,
 						updatedAt: now,
 					});
+
+					return {
+						pageNumber: index + 1,
+						imageFileId: pageId,
+					} satisfies SplitPageImage;
 				}),
 			);
+
+			return createdPages;
 		} catch (error) {
 			const logger = getLoggerStore();
 			logger.error({ err: error }, "Error splitting PDF into pages");

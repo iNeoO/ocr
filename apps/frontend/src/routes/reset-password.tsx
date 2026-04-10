@@ -61,7 +61,7 @@ function RouteComponent() {
 	const [isSubmitted, setIsSubmitted] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
-	const handleSubmit = async (event: React.FormEvent) => {
+	const handleSubmit = async (event: React.SubmitEvent) => {
 		event.preventDefault();
 		setErrorMessage(null);
 

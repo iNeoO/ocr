@@ -13,7 +13,10 @@
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
+    "@ocr/db": "workspace:*",
     "@ocr/backend": "workspace:*",
+    "@ocr/infra": "workspace:*",
+    "@ocr/services": "workspace:*",
     "@radix-ui/themes": "^3.3.0",
     "@tailwindcss/vite": "^4.1.18",
     "@tanstack/react-devtools": "latest",

@@ -12,11 +12,12 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as ValidateEmailRouteImport } from './routes/validate-email'
 import { Route as SignUpRouteImport } from './routes/sign-up'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as ProcessesRouteImport } from './routes/processes'
 import { Route as PasswordForgottenRouteImport } from './routes/password-forgotten'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as AboutRouteImport } from './routes/about'
+import { Route as AuthRouteRouteImport } from './routes/_auth/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthProcessesRouteImport } from './routes/_auth/processes'
+import { Route as DownloadsProcessesIdRouteImport } from './routes/downloads/processes/$id'
 
 const ValidateEmailRoute = ValidateEmailRouteImport.update({
   id: '/validate-email',
@@ -33,11 +34,6 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ProcessesRoute = ProcessesRouteImport.update({
-  id: '/processes',
-  path: '/processes',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const PasswordForgottenRoute = PasswordForgottenRouteImport.update({
   id: '/password-forgotten',
   path: '/password-forgotten',
@@ -48,9 +44,8 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AboutRoute = AboutRouteImport.update({
-  id: '/about',
-  path: '/about',
+const AuthRouteRoute = AuthRouteRouteImport.update({
+  id: '/_auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -58,80 +53,92 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthProcessesRoute = AuthProcessesRouteImport.update({
+  id: '/processes',
+  path: '/processes',
+  getParentRoute: () => AuthRouteRoute,
+} as any)
+const DownloadsProcessesIdRoute = DownloadsProcessesIdRouteImport.update({
+  id: '/downloads/processes/$id',
+  path: '/downloads/processes/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/about': typeof AboutRoute
   '/login': typeof LoginRoute
   '/password-forgotten': typeof PasswordForgottenRoute
-  '/processes': typeof ProcessesRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sign-up': typeof SignUpRoute
   '/validate-email': typeof ValidateEmailRoute
+  '/processes': typeof AuthProcessesRoute
+  '/downloads/processes/$id': typeof DownloadsProcessesIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/about': typeof AboutRoute
   '/login': typeof LoginRoute
   '/password-forgotten': typeof PasswordForgottenRoute
-  '/processes': typeof ProcessesRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sign-up': typeof SignUpRoute
   '/validate-email': typeof ValidateEmailRoute
+  '/processes': typeof AuthProcessesRoute
+  '/downloads/processes/$id': typeof DownloadsProcessesIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/about': typeof AboutRoute
+  '/_auth': typeof AuthRouteRouteWithChildren
   '/login': typeof LoginRoute
   '/password-forgotten': typeof PasswordForgottenRoute
-  '/processes': typeof ProcessesRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sign-up': typeof SignUpRoute
   '/validate-email': typeof ValidateEmailRoute
+  '/_auth/processes': typeof AuthProcessesRoute
+  '/downloads/processes/$id': typeof DownloadsProcessesIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/about'
     | '/login'
     | '/password-forgotten'
-    | '/processes'
     | '/reset-password'
     | '/sign-up'
     | '/validate-email'
+    | '/processes'
+    | '/downloads/processes/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/about'
     | '/login'
     | '/password-forgotten'
-    | '/processes'
     | '/reset-password'
     | '/sign-up'
     | '/validate-email'
+    | '/processes'
+    | '/downloads/processes/$id'
   id:
     | '__root__'
     | '/'
-    | '/about'
+    | '/_auth'
     | '/login'
     | '/password-forgotten'
-    | '/processes'
     | '/reset-password'
     | '/sign-up'
     | '/validate-email'
+    | '/_auth/processes'
+    | '/downloads/processes/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AboutRoute: typeof AboutRoute
+  AuthRouteRoute: typeof AuthRouteRouteWithChildren
   LoginRoute: typeof LoginRoute
   PasswordForgottenRoute: typeof PasswordForgottenRoute
-  ProcessesRoute: typeof ProcessesRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignUpRoute: typeof SignUpRoute
   ValidateEmailRoute: typeof ValidateEmailRoute
+  DownloadsProcessesIdRoute: typeof DownloadsProcessesIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -157,13 +164,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/processes': {
-      id: '/processes'
-      path: '/processes'
-      fullPath: '/processes'
-      preLoaderRoute: typeof ProcessesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/password-forgotten': {
       id: '/password-forgotten'
       path: '/password-forgotten'
@@ -178,11 +178,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/about': {
-      id: '/about'
-      path: '/about'
-      fullPath: '/about'
-      preLoaderRoute: typeof AboutRouteImport
+    '/_auth': {
+      id: '/_auth'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -192,18 +192,44 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_auth/processes': {
+      id: '/_auth/processes'
+      path: '/processes'
+      fullPath: '/processes'
+      preLoaderRoute: typeof AuthProcessesRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
+    '/downloads/processes/$id': {
+      id: '/downloads/processes/$id'
+      path: '/downloads/processes/$id'
+      fullPath: '/downloads/processes/$id'
+      preLoaderRoute: typeof DownloadsProcessesIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
+interface AuthRouteRouteChildren {
+  AuthProcessesRoute: typeof AuthProcessesRoute
+}
+
+const AuthRouteRouteChildren: AuthRouteRouteChildren = {
+  AuthProcessesRoute: AuthProcessesRoute,
+}
+
+const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(
+  AuthRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AboutRoute: AboutRoute,
+  AuthRouteRoute: AuthRouteRouteWithChildren,
   LoginRoute: LoginRoute,
   PasswordForgottenRoute: PasswordForgottenRoute,
-  ProcessesRoute: ProcessesRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SignUpRoute: SignUpRoute,
   ValidateEmailRoute: ValidateEmailRoute,
+  DownloadsProcessesIdRoute: DownloadsProcessesIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

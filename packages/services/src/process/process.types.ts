@@ -12,4 +12,5 @@ export type UpdateProcessStatusInput = {
 		| "finalizing"
 		| "completed"
 		| "failed";
+	isRunning?: boolean;
 };

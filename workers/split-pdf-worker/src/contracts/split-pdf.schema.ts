@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const splitPdfJobDataSchema = z.object({
-	id: z.string(),
+	processId: z.string(),
 });
 
 export type SplitPdfJobData = z.infer<typeof splitPdfJobDataSchema>;

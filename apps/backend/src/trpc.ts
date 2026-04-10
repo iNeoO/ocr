@@ -90,6 +90,14 @@ export const loggedProcedure = publicProcedure.use(async (opts) => {
 					logger,
 				},
 			});
+		} catch (error) {
+			logger.error(
+				{
+					err: error,
+				},
+				"tRPC request failed",
+			);
+			throw error;
 		} finally {
 			const durationMs = Date.now() - startedAt;
 			logHttpCompletion(logger, opts.ctx.res.statusCode, durationMs);

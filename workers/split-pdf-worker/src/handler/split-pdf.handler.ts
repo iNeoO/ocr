@@ -1,20 +1,20 @@
 import { getLoggerStore } from "@ocr/infra/libs";
-import type { FilesService } from "@ocr/services";
-import type { SplitPdfJobData } from "../contracts/split-pdf.schema";
+import type { ProcessService } from "@ocr/services";
+import type { SplitPdfJobData } from "../contracts/split-pdf.schema.js";
 
 export const createSplitWorker = ({
-	fileService,
+	processService,
 }: {
-	fileService: FilesService;
+	processService: ProcessService;
 }) => {
 	return async (message: SplitPdfJobData) => {
-		const { id } = message;
+		const { processId } = message;
 		const logger = getLoggerStore();
 		const startedAt = new Date();
-		logger.info({ id }, "Starting PDF split job");
-		await fileService.splitFileIntoPages(id);
+		logger.info({ processId }, "Starting PDF split job");
+		await processService.splitSourceFileIntoPages(processId);
 		const finishedAt = new Date();
 		const duration = finishedAt.getTime() - startedAt.getTime();
-		logger.info({ id, duration }, "Finished PDF split job");
+		logger.info({ processId, duration }, "Finished PDF split job");
 	};
 };
