@@ -9,7 +9,7 @@ x-app-env: &app-env
     PG_URL: postgresql://${PG_OCR_USER}:${PG_OCR_PASSWORD}@postgres:5432/${PG_OCR_DB}
     REDIS_OCR_HOST: redis
     REDIS_OCR_PORT: 6379
-    AMQP_URL: amqp://${RABBITMQ_DEFAULT_USER:-ocr}:${RABBITMQ_DEFAULT_PASS:-ocr_password}@rabbitmq:5672
+    AMQP_URL: amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:5672
     MINIO_ENDPOINT: http://minio:9000
   networks:
     - ocr-network
@@ -33,7 +33,7 @@ services:
       timeout: 5s
       retries: 10
     ports:
-      - "127.0.0.1:${PG_OCR_HOST_PORT:-5436}:5432"
+      - "127.0.0.1:${PG_OCR_HOST_PORT}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     networks:
@@ -50,7 +50,7 @@ services:
       timeout: 5s
       retries: 10
     ports:
-      - "127.0.0.1:${REDIS_OCR_HOST_PORT:-6380}:6379"
+      - "127.0.0.1:${REDIS_OCR_HOST_PORT}:6379"
     networks:
       - ocr-network
 
@@ -59,17 +59,17 @@ services:
     container_name: ocr-rabbitmq-prod
     restart: unless-stopped
     environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER:-ocr}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS:-ocr_password}
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
       interval: 10s
       timeout: 10s
       retries: 10
     ports:
-      - "127.0.0.1:${AMQP_HOST_PORT:-5673}:5672"
-      - "127.0.0.1:${RABBITMQ_MANAGEMENT_HOST_PORT:-15673}:15672"
-      - "127.0.0.1:${RABBITMQ_PROMETHEUS_HOST_PORT:-15693}:15692"
+      - "127.0.0.1:${AMQP_HOST_PORT}:5672"
+      - "127.0.0.1:${RABBITMQ_MANAGEMENT_HOST_PORT}:15672"
+      - "127.0.0.1:${RABBITMQ_PROMETHEUS_HOST_PORT}:15692"
     networks:
       - ocr-network
 
@@ -82,8 +82,8 @@ services:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
     ports:
-      - "127.0.0.1:${MINIO_API_HOST_PORT:-9002}:9000"
-      - "127.0.0.1:${MINIO_CONSOLE_HOST_PORT:-9003}:9001"
+      - "127.0.0.1:${MINIO_API_HOST_PORT}:9000"
+      - "127.0.0.1:${MINIO_CONSOLE_HOST_PORT}:9001"
     volumes:
       - minio-data:/data
     networks:
@@ -109,7 +109,7 @@ services:
       dockerfile: ./apps/backend/Dockerfile
     restart: unless-stopped
     ports:
-      - "127.0.0.1:${BACKEND_HOST_PORT:-4010}:4010"
+      - "127.0.0.1:${BACKEND_HOST_PORT}:4010"
     depends_on:
       postgres:
         condition: service_healthy
@@ -212,8 +212,11 @@ services:
 
 volumes:
   pgdata:
+    name: ocr-pgdata-prod
   minio-data:
+    name: ocr-minio-data-prod
 
 networks:
   ocr-network:
+    name: ocr-network-prod
     driver: bridge
