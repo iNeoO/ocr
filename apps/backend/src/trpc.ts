@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { IncomingMessage, ServerResponse } from "node:http";
+import type { Logger } from "@ocr/infra/libs";
 import {
 	createHttpLogger,
 	loggerStorage,
@@ -15,13 +16,24 @@ import { observeTrpcRequest, trackTrpcSubscription } from "./metrics.js";
 
 const UNKNOWN_VALUE = "unknown";
 
+export type Context = {
+	req: IncomingMessage;
+	res: ServerResponse;
+	logger: Logger;
+	user:
+		| NonNullable<Awaited<ReturnType<AuthService["getSession"]>>>["user"]
+		| undefined;
+};
+
 export class ContextBuilder {
 	private authService: AuthService;
 	constructor(authService: AuthService) {
 		this.authService = authService;
 	}
 
-	create() {
+	create(): (
+		opts: NodeHTTPCreateContextFnOptions<IncomingMessage, ServerResponse>,
+	) => Promise<Context> {
 		return async ({
 			req,
 			res,
@@ -53,8 +65,6 @@ export class ContextBuilder {
 	}
 }
 
-export type Context = Awaited<ReturnType<ContextBuilder["create"]>>;
-
 const t = initTRPC.context<Context>().create({
 	errorFormatter(opts) {
 		return {
@@ -71,67 +81,70 @@ const t = initTRPC.context<Context>().create({
 	},
 });
 
-export const router = t.router;
-export const publicProcedure = t.procedure;
+export const router: typeof t.router = t.router;
+export const publicProcedure: typeof t.procedure = t.procedure;
 
-export const loggedProcedure = publicProcedure.use(async (opts) => {
-	const startedAt = Date.now();
-	let result: "success" | "error" = "success";
-	const logger = opts.ctx.logger.child({
-		trpc: {
-			path: opts.path || UNKNOWN_VALUE,
-			type: opts.type || UNKNOWN_VALUE,
-		},
-	});
-
-	return loggerStorage.run(logger, async () => {
-		try {
-			const nextResult = await opts.next({
-				ctx: {
-					...opts.ctx,
-					logger,
-				},
-			});
-			if (opts.type === "subscription") {
-				const endSubscriptionMetric = trackTrpcSubscription(
-					opts.path || UNKNOWN_VALUE,
-				);
-				opts.signal?.addEventListener("abort", endSubscriptionMetric, {
-					once: true,
-				});
-			}
-			return nextResult;
-		} catch (error) {
-			result = "error";
-			logger.error(
-				{
-					err: error,
-				},
-				"tRPC request failed",
-			);
-			throw error;
-		} finally {
-			const durationMs = Date.now() - startedAt;
-			observeTrpcRequest({
-				procedure: opts.path || UNKNOWN_VALUE,
+export const loggedProcedure: typeof publicProcedure = publicProcedure.use(
+	async (opts) => {
+		const startedAt = Date.now();
+		let result: "success" | "error" = "success";
+		const logger = opts.ctx.logger.child({
+			trpc: {
+				path: opts.path || UNKNOWN_VALUE,
 				type: opts.type || UNKNOWN_VALUE,
-				statusCode: opts.ctx.res.statusCode,
-				durationMs,
-				result,
-			});
-			logHttpCompletion(logger, opts.ctx.res.statusCode, durationMs);
-		}
-	});
-});
+			},
+		});
 
-export const loggedProtectedProcedure = loggedProcedure.use(({ ctx, next }) => {
-	if (!ctx.user?.id) {
-		throw createUnauthorizedError();
-	}
-	return next({
-		ctx: {
-			...ctx,
-			user: ctx.user,
-		},
+		return loggerStorage.run(logger, async () => {
+			try {
+				const nextResult = await opts.next({
+					ctx: {
+						...opts.ctx,
+						logger,
+					},
+				});
+				if (opts.type === "subscription") {
+					const endSubscriptionMetric = trackTrpcSubscription(
+						opts.path || UNKNOWN_VALUE,
+					);
+					opts.signal?.addEventListener("abort", endSubscriptionMetric, {
+						once: true,
+					});
+				}
+				return nextResult;
+			} catch (error) {
+				result = "error";
+				logger.error(
+					{
+						err: error,
+					},
+					"tRPC request failed",
+				);
+				throw error;
+			} finally {
+				const durationMs = Date.now() - startedAt;
+				observeTrpcRequest({
+					procedure: opts.path || UNKNOWN_VALUE,
+					type: opts.type || UNKNOWN_VALUE,
+					statusCode: opts.ctx.res.statusCode,
+					durationMs,
+					result,
+				});
+				logHttpCompletion(logger, opts.ctx.res.statusCode, durationMs);
+			}
+		});
+	},
+);
+
+export const loggedProtectedProcedure: typeof loggedProcedure =
+	loggedProcedure.use(({ ctx, next }) => {
+		if (!ctx.user?.id) {
+			throw createUnauthorizedError();
+		}
+		return next({
+			ctx: {
+				...ctx,
+				user: ctx.user,
+			},
+		});
 	});
-});

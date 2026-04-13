@@ -1,4 +1,5 @@
 import type { FilesService, ProcessService } from "@ocr/services";
+import { createUnauthorizedError } from "../../helpers/errors.helpers.js";
 import { loggedProtectedProcedure, router } from "../../trpc.js";
 import { uploadFileSchema } from "./files.schema.js";
 
@@ -23,15 +24,19 @@ export class FilesRouterBuilder {
 				})
 				.input(uploadFileSchema)
 				.mutation(async ({ ctx, input }) => {
+					const user = ctx.user;
+					if (!user) {
+						throw createUnauthorizedError();
+					}
 					ctx.logger.info("Upload file");
-					await this.processService.assertDailyProcessLimit(ctx.user.id);
+					await this.processService.assertDailyProcessLimit(user.id);
 
 					const file = await this.filesService.uploadFile(input.file);
 
 					try {
 						const process = await this.processService.createProcess({
 							fileId: file.id,
-							userId: ctx.user.id,
+							userId: user.id,
 						});
 
 						return { process };

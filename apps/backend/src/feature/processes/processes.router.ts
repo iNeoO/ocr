@@ -1,5 +1,6 @@
 import type { ProcessStatusEvent } from "@ocr/common";
 import type { ProcessService, ProcessStatusPubSubService } from "@ocr/services";
+import { createUnauthorizedError } from "../../helpers/errors.helpers.js";
 import { loggedProtectedProcedure, router } from "../../trpc.js";
 import { deleteProcessInput } from "./processes.schema.js";
 
@@ -20,7 +21,11 @@ export class ProcessesRouterBuilder {
 
 		return router({
 			getProcesses: loggedProtectedProcedure.query(async ({ ctx }) => {
-				const userId = ctx.user.id;
+				const user = ctx.user;
+				if (!user) {
+					throw createUnauthorizedError();
+				}
+				const userId = user.id;
 				ctx.logger.info({ userId }, "Get processes for user");
 				const processes =
 					await this.processService.getProcessesByUserId(userId);
@@ -29,19 +34,29 @@ export class ProcessesRouterBuilder {
 			delete: loggedProtectedProcedure
 				.input(deleteProcessInput)
 				.mutation(async ({ ctx, input }) => {
+					const user = ctx.user;
+					if (!user) {
+						throw createUnauthorizedError();
+					}
+					const userId = user.id;
 					ctx.logger.info(
-						{ userId: ctx.user.id, processId: input.processId },
+						{ userId, processId: input.processId },
 						"Delete process",
 					);
-					await this.processService.deleteProcess(input.processId, ctx.user.id);
+					await this.processService.deleteProcess(input.processId, userId);
 					return { success: true };
 				}),
 			status: loggedProtectedProcedure.subscription(async function* (opts) {
+				const user = opts.ctx.user;
+				if (!user) {
+					throw createUnauthorizedError();
+				}
+				const userId = user.id;
 				const queue: ProcessStatusEvent[] = [];
 				let resume: (() => void) | null = null;
 				const unsubscribe =
 					await processStatusPubSubService.subscribeToUserProcessStatus(
-						opts.ctx.user.id,
+						userId,
 						(event: ProcessStatusEvent) => {
 							queue.push(event);
 							resume?.();
