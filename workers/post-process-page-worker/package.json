@@ -1,0 +1,34 @@
+{
+  "name": "@ocr/post-process-page-worker",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch --clear-screen=false src/index.ts",
+    "start": "node dist/index.js",
+    "lint": "biome check",
+    "build": "rm -rf dist && tsc -p tsconfig.build.json"
+  },
+  "dependencies": {
+    "amqplib": "catalog:",
+    "@ocr/db": "workspace:*",
+    "@ocr/infra": "workspace:*",
+    "@ocr/services": "workspace:*",
+    "zod": "catalog:"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./dist/index.js"
+    },
+    "./publisher": {
+      "types": "./src/publisher.ts",
+      "default": "./dist/publisher.js"
+    }
+  },
+  "devDependencies": {
+    "@biomejs/biome": "catalog:",
+    "@types/amqplib": "catalog:",
+    "@types/node": "catalog:",
+    "tsx": "catalog:",
+    "typescript": "catalog:"
+  }
+}

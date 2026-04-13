@@ -1,25 +1,14 @@
+import { Callout, Container, Flex, Heading } from "@radix-ui/themes";
+import { createFileRoute } from "@tanstack/react-router";
+import { type DragEvent, useRef, useState } from "react";
+import { ProcessesTable } from "../../components/processes/ProcessesTable";
+import { UploadProcessDialog } from "../../components/processes/UploadProcessDialog";
 import {
-	ArchiveBoxArrowDownIcon,
-	TrashIcon,
-} from "@heroicons/react/24/outline";
-import {
-	Box,
-	Badge,
-	Button,
-	Callout,
-	Container,
-	Dialog,
-	Flex,
-	Heading,
-	Table,
-	Text,
-} from "@radix-ui/themes";
-import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { FileText, Upload } from "lucide-react";
-import { useRef, useState, type DragEvent } from "react";
-import { getProcessStatusColor } from "../../helpers/colorChart.helper";
-import { formatDate } from "../../helpers/formater.helper";
-import { trpc } from "../../libs/trpc";
+	getFileSizeLabel,
+	isPdfFile,
+} from "../../components/processes/processes.helpers";
+import { useProcessActions } from "../../components/processes/useProcessActions";
+import { useProcessStatusSubscription } from "../../components/processes/useProcessStatusSubscription";
 import { getProcessesByUserId } from "../../libs/api/processes";
 
 export const Route = createFileRoute("/_auth/processes")({
@@ -32,19 +21,27 @@ export const Route = createFileRoute("/_auth/processes")({
 
 function ProcessesPage() {
 	const { processes } = Route.useLoaderData();
-	const router = useRouter();
+	useProcessStatusSubscription();
 	const [isUploadOpen, setIsUploadOpen] = useState(false);
 	const [selectedFile, setSelectedFile] = useState<File | null>(null);
 	const [isDragging, setIsDragging] = useState(false);
-	const [isUploading, setIsUploading] = useState(false);
 	const [uploadError, setUploadError] = useState<string | null>(null);
-	const [downloadProcessId, setDownloadProcessId] = useState<string | null>(null);
-	const [deleteProcessId, setDeleteProcessId] = useState<string | null>(null);
 	const inputRef = useRef<HTMLInputElement | null>(null);
-
-	const isPdfFile = (file: File) =>
-		file.type === "application/pdf" ||
-		file.name.toLowerCase().endsWith(".pdf");
+	const {
+		isUploading,
+		downloadProcessId,
+		deleteProcessId,
+		actionError,
+		pendingDeleteProcess,
+		setPendingDeleteProcess,
+		upload,
+		download,
+		requestDelete,
+		confirmDelete,
+	} = useProcessActions();
+	const completedCount = processes.filter((process) => process.status === "completed").length;
+	const runningCount = processes.filter((process) => process.isRunning).length;
+	const failedCount = processes.filter((process) => process.status === "failed").length;
 
 	const setPdfFile = (file: File | null) => {
 		if (!file || !isPdfFile(file)) {
@@ -62,44 +59,18 @@ function ProcessesPage() {
 			return;
 		}
 
-		setIsUploading(true);
 		setUploadError(null);
 
 		try {
-			const formData = new FormData();
-			formData.append("file", selectedFile);
-
-			const response = await fetch("/trpc/files.upload", {
-				method: "POST",
-				body: formData,
-				credentials: "include",
-			});
-
-			const payload = (await response.json().catch(() => null)) as
-				| {
-						error?: {
-							message?: string;
-						};
-				  }
-				| null;
-
-			if (!response.ok || payload?.error?.message) {
-				throw new Error(payload?.error?.message ?? "Upload failed.");
-			}
-
+			await upload(selectedFile);
 			setIsUploadOpen(false);
 			setSelectedFile(null);
 			setIsDragging(false);
 			if (inputRef.current) {
 				inputRef.current.value = "";
 			}
-			await router.invalidate();
 		} catch (error) {
-			setUploadError(
-				error instanceof Error ? error.message : "Upload failed.",
-			);
-		} finally {
-			setIsUploading(false);
+			setUploadError(error instanceof Error ? error.message : "Upload failed.");
 		}
 	};
 
@@ -109,74 +80,9 @@ function ProcessesPage() {
 			setSelectedFile(null);
 			setIsDragging(false);
 			setUploadError(null);
-			setIsUploading(false);
 			if (inputRef.current) {
 				inputRef.current.value = "";
 			}
-		}
-	};
-
-	const handleDownload = async (processId: string) => {
-		setDownloadProcessId(processId);
-
-		try {
-			const response = await fetch(`/downloads/processes/${processId}`, {
-				method: "GET",
-				credentials: "include",
-			});
-
-			if (!response.ok) {
-				const payload = (await response.json().catch(() => null)) as
-					| { message?: string }
-					| null;
-				throw new Error(payload?.message ?? "Download failed.");
-			}
-
-			const blob = await response.blob();
-			const disposition = response.headers.get("content-disposition");
-			const filenameMatch = disposition?.match(/filename="([^"]+)"/);
-			const filename = filenameMatch?.[1] ?? `process-${processId}.zip`;
-			const url = window.URL.createObjectURL(blob);
-			const link = document.createElement("a");
-			link.href = url;
-			link.download = filename;
-			document.body.appendChild(link);
-			link.click();
-			link.remove();
-			window.URL.revokeObjectURL(url);
-		} catch (error) {
-			window.alert(
-				error instanceof Error ? error.message : "Download failed.",
-			);
-		} finally {
-			setDownloadProcessId((currentProcessId) =>
-				currentProcessId === processId ? null : currentProcessId,
-			);
-		}
-	};
-
-	const handleDelete = async (processId: string) => {
-		if (
-			!window.confirm(
-				"This will delete the process, its pages and every related file. Continue?",
-			)
-		) {
-			return;
-		}
-
-		setDeleteProcessId(processId);
-
-		try {
-			await trpc.processes.delete.mutate({ processId });
-			await router.invalidate();
-		} catch (error) {
-			window.alert(
-				error instanceof Error ? error.message : "Delete failed.",
-			);
-		} finally {
-			setDeleteProcessId((currentProcessId) =>
-				currentProcessId === processId ? null : currentProcessId,
-			);
 		}
 	};
 
@@ -199,224 +105,123 @@ function ProcessesPage() {
 		}
 	};
 
-	const selectedFileSize = selectedFile
-		? `${(selectedFile.size / 1024 / 1024).toFixed(2)} MB`
-		: null;
-
 	return (
-		<Container size="4" px="4" py={{ initial: "8", sm: "9" }}>
-			<Flex mb="5" align="center" justify="between" gap="3" wrap="wrap">
-				<Heading size="8" className="display-title">
-					Processes
-				</Heading>
-				<Dialog.Root open={isUploadOpen} onOpenChange={handleOpenChange}>
-					<Dialog.Trigger>
-						<Button color="orange">Upload file</Button>
-					</Dialog.Trigger>
-					<Dialog.Content
-						maxWidth="640px"
-						className="upload-dialog-content"
-					>
-						<Dialog.Title className="display-title">Upload a PDF</Dialog.Title>
-						<Dialog.Description size="2" mb="5" color="gray">
-							Drag your file here or use the button to start a new process.
-							Only PDF files are accepted. Limit: 5 uploads per day per user.
-							If you delete a completed or failed process, you free up a slot.
-						</Dialog.Description>
-						<Flex direction="column" gap="4">
-							{uploadError ? (
-								<Callout.Root color="red" variant="soft" size="2">
-									<Callout.Text>{uploadError}</Callout.Text>
-								</Callout.Root>
-							) : null}
-							<Box
-								asChild
-								className={`upload-dropzone ${
-									isDragging ? "is-dragging" : ""
-								}`}
-							>
-								<label
-									onDrop={handleDrop}
-									onDragOver={handleDragOver}
-									onDragLeave={handleDragLeave}
-								>
-									<input
-										ref={inputRef}
-										type="file"
-										accept="application/pdf,.pdf"
-										className="sr-only"
-										onChange={(event) =>
-											setPdfFile(event.target.files?.[0] ?? null)
-										}
-									/>
-									<Flex
-										direction="column"
-										align="center"
-										justify="center"
-										gap="4"
-									>
-										<Box className="upload-dropzone-icon">
-											<Upload size={34} strokeWidth={2.2} />
-										</Box>
-										<Flex direction="column" align="center" gap="2">
-											<Text size="6" weight="bold" align="center">
-												Drop your PDF here or click to upload
-											</Text>
-											<Text size="2" color="gray" align="center">
-												Import simple, format PDF uniquement.
-											</Text>
-										</Flex>
-										<Button
-											type="button"
-											color="orange"
-											size="3"
-											onClick={(event) => {
-												event.preventDefault();
-												inputRef.current?.click();
-											}}
-										>
-											Choose PDF
-										</Button>
-									</Flex>
-								</label>
-							</Box>
+		<Container size="4" px="4" py={{ initial: "7", sm: "8" }}>
+			<div className="grid gap-5">
+				<section className="data-panel rounded-[24px] px-5 py-5 sm:px-6">
+					<div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
+						<div className="page-header">
+							<p className="section-kicker m-0">Process monitoring</p>
+							<Heading size="7" className="display-title text-3xl sm:text-4xl">
+								Document runs
+							</Heading>
+							<p className="m-0 max-w-[62ch] text-sm sm:text-base text-(--text-muted)">
+								Track active OCR jobs, review failures and download completed
+								archives. The queue is the primary surface.
+							</p>
+						</div>
 
-							<Box className="upload-file-summary">
-								{selectedFile ? (
-									<Flex align="center" justify="between" gap="3" wrap="wrap">
-										<Flex align="center" gap="3">
-											<Box className="upload-file-icon">
-												<FileText size={18} />
-											</Box>
-											<Flex direction="column" gap="1">
-												<Text size="2" weight="bold">
-													{selectedFile.name}
-												</Text>
-												<Text size="1" color="gray">
-													Selected PDF • {selectedFileSize}
-												</Text>
-											</Flex>
-										</Flex>
-										<Button
-											type="button"
-											variant="soft"
-											color="gray"
-											onClick={() => {
-												setSelectedFile(null);
-												if (inputRef.current) {
-													inputRef.current.value = "";
-												}
-											}}
-										>
-											Remove
-										</Button>
-									</Flex>
-								) : (
-									<Text size="2" color="gray">
-										No file selected.
-									</Text>
-								)}
-							</Box>
-						</Flex>
-						<Flex mt="5" gap="3" justify="end">
-							<Dialog.Close>
-								<Button variant="soft" color="gray">
-									Cancel
-								</Button>
-							</Dialog.Close>
-							<Button
-								color="orange"
-								onClick={handleUpload}
-								disabled={!selectedFile || isUploading}
-							>
-								{isUploading ? "Uploading..." : "Upload"}
-							</Button>
-						</Flex>
-					</Dialog.Content>
-				</Dialog.Root>
-			</Flex>
-			{processes.length === 0 ? (
-				<Text size="3" color="gray">
-					No process found.
-				</Text>
-			) : (
-				<Table.Root variant="surface" size="2">
-					<Table.Header>
-						<Table.Row>
-							<Table.ColumnHeaderCell>Created at</Table.ColumnHeaderCell>
-							<Table.ColumnHeaderCell>Updated at</Table.ColumnHeaderCell>
-							<Table.ColumnHeaderCell>File name</Table.ColumnHeaderCell>
-							<Table.ColumnHeaderCell>Status</Table.ColumnHeaderCell>
-							<Table.ColumnHeaderCell>Error</Table.ColumnHeaderCell>
-							<Table.ColumnHeaderCell>Error at</Table.ColumnHeaderCell>
-							<Table.ColumnHeaderCell>Completed pages</Table.ColumnHeaderCell>
-							<Table.ColumnHeaderCell>Page count</Table.ColumnHeaderCell>
-							<Table.ColumnHeaderCell>Action</Table.ColumnHeaderCell>
-						</Table.Row>
-					</Table.Header>
-					<Table.Body>
-						{processes.map((process) => (
-							<Table.Row key={process.id}>
-								<Table.Cell>{formatDate(process.createdAt)}</Table.Cell>
-								<Table.Cell>{formatDate(process.updatedAt)}</Table.Cell>
-								<Table.Cell>{process.sourceFileName}</Table.Cell>
-								<Table.Cell>
-									<Badge
-										color={getProcessStatusColor(process.status)}
-										variant="soft"
-									>
-										{process.status}
-										{process.isRunning ? " • running" : ""}
-									</Badge>
-								</Table.Cell>
-								<Table.Cell>{process.error ?? "—"}</Table.Cell>
-								<Table.Cell>
-									{process.error ? formatDate(process.errorAt) : "—"}
-								</Table.Cell>
-								<Table.Cell>{process.completedPages}</Table.Cell>
-								<Table.Cell>{process.pageCount}</Table.Cell>
-								<Table.Cell>
-									{process.status === "completed" ||
-									process.status === "failed" ? (
-										<Flex gap="2" wrap="wrap">
-											{process.status === "completed" ? (
-												<Button
-													size="1"
-													color="orange"
-													variant="soft"
-													onClick={() => void handleDownload(process.id)}
-													disabled={downloadProcessId === process.id}
-												>
-													<ArchiveBoxArrowDownIcon width={16} height={16} />
-													{downloadProcessId === process.id
-														? "Downloading..."
-														: "ZIP"}
-												</Button>
-											) : null}
-											<Button
-												size="1"
-												color="red"
-												variant="soft"
-												onClick={() => void handleDelete(process.id)}
-												disabled={deleteProcessId === process.id}
-											>
-												<TrashIcon width={16} height={16} />
-												{deleteProcessId === process.id
-													? "Deleting..."
-													: "Delete"}
-											</Button>
-										</Flex>
-									) : (
-										<Text size="1" color="gray">
-											—
-										</Text>
-									)}
-								</Table.Cell>
-							</Table.Row>
-						))}
-					</Table.Body>
-				</Table.Root>
-			)}
+						<div className="grid gap-3 sm:grid-cols-3">
+							<div className="metric-card">
+								<p className="section-kicker m-0">Total</p>
+								<p className="metric-value">{processes.length}</p>
+								<p className="metric-label m-0">Tracked processes</p>
+							</div>
+							<div className="metric-card">
+								<p className="section-kicker m-0">Running</p>
+								<p className="metric-value">{runningCount}</p>
+								<p className="metric-label m-0">Currently in motion</p>
+							</div>
+							<div className="metric-card">
+								<p className="section-kicker m-0">Delivered</p>
+								<p className="metric-value">{completedCount}</p>
+								<p className="metric-label m-0">
+									Failed: {failedCount}
+								</p>
+							</div>
+						</div>
+					</div>
+				</section>
+
+				<section className="data-panel rounded-[24px] p-4 sm:p-5">
+					<div className="mb-4 flex items-end justify-between gap-3">
+						<div>
+							<p className="section-kicker m-0">Queue</p>
+							<Heading size="6" className="panel-title mt-2">
+								All document runs
+							</Heading>
+						</div>
+						<p className="mono-label m-0 text-[0.66rem] tracking-[0.16em] text-(--text-faint)">
+							live subscription
+						</p>
+					</div>
+
+					{actionError ? (
+						<Callout.Root color="red" variant="soft" size="2" mb="4" className="surface-callout">
+							<Callout.Text>{actionError}</Callout.Text>
+						</Callout.Root>
+					) : null}
+
+					<ProcessesTable
+						processes={processes}
+						downloadProcessId={downloadProcessId}
+						deleteProcessId={deleteProcessId}
+						pendingDeleteProcess={pendingDeleteProcess}
+						onDownload={download}
+						onRequestDelete={requestDelete}
+						onDeleteConfirmOpenChange={(open) => {
+							if (!open) {
+								setPendingDeleteProcess(null);
+							}
+						}}
+						onDeleteConfirm={confirmDelete}
+					/>
+				</section>
+
+				<section className="grid gap-5 lg:grid-cols-[minmax(320px,0.95fr)_minmax(0,1fr)]">
+					<div className="data-panel rounded-[24px] p-4 sm:p-5">
+						<p className="section-kicker m-0">New intake</p>
+						<Heading size="6" className="panel-title mt-2">
+							Start a fresh process
+						</Heading>
+						<p className="mt-3 text-(--text-muted)">
+							Upload a PDF, validate it and open a new OCR run from the same page.
+						</p>
+						<div className="mt-5">
+							<UploadProcessDialog
+								isOpen={isUploadOpen}
+								selectedFile={selectedFile}
+								selectedFileSize={getFileSizeLabel(selectedFile)}
+								isDragging={isDragging}
+								isUploading={isUploading}
+								uploadError={uploadError}
+								inputRef={inputRef}
+								onOpenChange={handleOpenChange}
+								onDrop={handleDrop}
+								onDragOver={handleDragOver}
+								onDragLeave={handleDragLeave}
+								onFileChange={setPdfFile}
+								onRemoveFile={() => {
+									setSelectedFile(null);
+									if (inputRef.current) {
+										inputRef.current.value = "";
+									}
+								}}
+								onUpload={handleUpload}
+							/>
+						</div>
+					</div>
+
+					<div className="feature-card rounded-[24px] p-5">
+						<p className="section-kicker m-0">Notes</p>
+						<ul className="mt-4 grid gap-3 pl-5 text-(--text-muted)">
+							<li>Only PDF files are accepted for upload.</li>
+							<li>Completed and failed jobs expose archive or delete actions.</li>
+							<li>Removing a completed or failed process frees an upload slot.</li>
+						</ul>
+					</div>
+				</section>
+			</div>
 		</Container>
 	);
 }

@@ -48,12 +48,18 @@ importers:
 
   apps/backend:
     dependencies:
+      '@ocr/common':
+        specifier: workspace:*
+        version: link:../../packages/common
       '@ocr/db':
         specifier: workspace:*
         version: link:../../db
       '@ocr/infra':
         specifier: workspace:*
         version: link:../../packages/infra
+      '@ocr/post-process-page-worker':
+        specifier: workspace:*
+        version: link:../../workers/post-process-page-worker
       '@ocr/services':
         specifier: workspace:*
         version: link:../../packages/services
@@ -65,7 +71,7 @@ importers:
         version: link:../../workers/transcribe-jpg-worker
       '@trpc/server':
         specifier: 'catalog:'
-        version: 11.16.0(typescript@6.0.2)
+        version: 11.16.0(typescript@5.9.3)
       zod:
         specifier: 'catalog:'
         version: 4.3.6
@@ -79,6 +85,9 @@ importers:
       tsx:
         specifier: 'catalog:'
         version: 4.21.0
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
 
   apps/frontend:
     dependencies:
@@ -88,6 +97,9 @@ importers:
       '@ocr/backend':
         specifier: workspace:*
         version: link:../backend
+      '@ocr/common':
+        specifier: workspace:*
+        version: link:../../packages/common
       '@ocr/db':
         specifier: workspace:*
         version: link:../../db
@@ -210,6 +222,21 @@ importers:
       tsx:
         specifier: ^4.21.0
         version: 4.21.0
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+
+  packages/common:
+    devDependencies:
+      '@biomejs/biome':
+        specifier: 'catalog:'
+        version: 2.4.10
+      '@types/node':
+        specifier: 'catalog:'
+        version: 24.12.2
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
 
   packages/infra:
     dependencies:
@@ -247,12 +274,24 @@ importers:
       '@better-auth/redis-storage':
         specifier: ^1.6.0
         version: 1.6.0(@better-auth/core@1.6.0(@better-auth/utils@0.4.0)(@better-fetch/fetch@1.1.21)(@opentelemetry/api@1.9.1)(better-call@1.3.5(zod@4.3.6))(jose@6.2.2)(kysely@0.28.15)(nanostores@1.2.0))(ioredis@5.10.1)
+      '@ocr/common':
+        specifier: workspace:*
+        version: link:../common
       '@ocr/db':
         specifier: workspace:*
         version: link:../../db
       '@ocr/infra':
         specifier: workspace:*
         version: link:../infra
+      '@ocr/post-process-page-worker':
+        specifier: workspace:*
+        version: link:../../workers/post-process-page-worker
+      '@ocr/split-pdf-worker':
+        specifier: workspace:*
+        version: link:../../workers/split-pdf-worker
+      '@ocr/transcribe-jpg-worker':
+        specifier: workspace:*
+        version: link:../../workers/transcribe-jpg-worker
       better-auth:
         specifier: ^1.6.0
         version: 1.6.0(@opentelemetry/api@1.9.1)(@tanstack/react-start@1.167.16(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(vite@7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(tsx@4.21.0)))(drizzle-kit@0.31.10)(drizzle-orm@0.45.2(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(kysely@0.28.15)(pg@8.20.0))(pg@8.20.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(solid-js@1.9.12)(vitest@3.2.4(@types/node@24.12.2)(jiti@2.6.1)(jsdom@28.1.0(@noble/hashes@2.0.1))(lightningcss@1.32.0)(tsx@4.21.0))
@@ -287,9 +326,21 @@ importers:
 
   scripts:
     dependencies:
+      '@aws-sdk/client-s3':
+        specifier: ^3.1026.0
+        version: 3.1026.0
+      '@ocr/db':
+        specifier: workspace:*
+        version: link:../db
+      '@ocr/infra':
+        specifier: workspace:*
+        version: link:../packages/infra
       '@trpc/openapi':
         specifier: 11.13.1-alpha
-        version: 11.13.1-alpha(@hey-api/openapi-ts@0.95.0(typescript@6.0.2))(@trpc/server@11.13.1(typescript@6.0.2))(typescript@6.0.2)(zod@4.3.6)
+        version: 11.13.1-alpha(@hey-api/openapi-ts@0.95.0(typescript@5.9.3))(@trpc/server@11.13.1(typescript@5.9.3))(typescript@5.9.3)(zod@4.3.6)
+      drizzle-orm:
+        specifier: ^0.45.2
+        version: 0.45.2(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(kysely@0.28.15)(pg@8.20.0)
       superjson:
         specifier: ^2.2.6
         version: 2.2.6
@@ -297,6 +348,12 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 24.12.2
+      tsx:
+        specifier: ^4.21.0
+        version: 4.21.0
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
 
   workers/cleanup-process-worker:
     dependencies:
@@ -316,6 +373,40 @@ importers:
       '@biomejs/biome':
         specifier: 'catalog:'
         version: 2.4.10
+      '@types/node':
+        specifier: 'catalog:'
+        version: 24.12.2
+      tsx:
+        specifier: 'catalog:'
+        version: 4.21.0
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+
+  workers/post-process-page-worker:
+    dependencies:
+      '@ocr/db':
+        specifier: workspace:*
+        version: link:../../db
+      '@ocr/infra':
+        specifier: workspace:*
+        version: link:../../packages/infra
+      '@ocr/services':
+        specifier: workspace:*
+        version: link:../../packages/services
+      amqplib:
+        specifier: 'catalog:'
+        version: 0.10.9
+      zod:
+        specifier: 'catalog:'
+        version: 4.3.6
+    devDependencies:
+      '@biomejs/biome':
+        specifier: 'catalog:'
+        version: 2.4.10
+      '@types/amqplib':
+        specifier: 'catalog:'
+        version: 0.10.8
       '@types/node':
         specifier: 'catalog:'
         version: 24.12.2
@@ -371,6 +462,9 @@ importers:
       '@ocr/infra':
         specifier: workspace:*
         version: link:../../packages/infra
+      '@ocr/post-process-page-worker':
+        specifier: workspace:*
+        version: link:../post-process-page-worker
       '@ocr/services':
         specifier: workspace:*
         version: link:../../packages/services
@@ -4541,11 +4635,6 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
-  typescript@6.0.2:
-    resolution: {integrity: sha512-bGdAIrZ0wiGDo5l8c++HWtbaNCWTS4UTv7RaTH/ThVIgjkveJt83m74bBHMJkuCbslY8ixgLBVZJIOiQlQTjfQ==}
-    engines: {node: '>=14.17'}
-    hasBin: true
-
   ufo@1.6.3:
     resolution: {integrity: sha512-yDJTmhydvl5lJzBmy/hyOAA0d+aqCBuwl818haVdYCRrWV84o7YyeVm4QlVHStqNrrJSTb6jKuFAVqAFsr+K3Q==}
 
@@ -5796,7 +5885,7 @@ snapshots:
       js-yaml: 4.1.1
     optional: true
 
-  '@hey-api/openapi-ts@0.95.0(typescript@6.0.2)':
+  '@hey-api/openapi-ts@0.95.0(typescript@5.9.3)':
     dependencies:
       '@hey-api/codegen-core': 0.7.4
       '@hey-api/json-schema-ref-parser': 1.3.1
@@ -5807,7 +5896,7 @@ snapshots:
       color-support: 1.1.3
       commander: 14.0.3
       get-tsconfig: 4.13.6
-      typescript: 6.0.2
+      typescript: 5.9.3
     transitivePeerDependencies:
       - magicast
     optional: true
@@ -7616,25 +7705,21 @@ snapshots:
       '@trpc/server': 11.16.0(typescript@5.9.3)
       typescript: 5.9.3
 
-  '@trpc/openapi@11.13.1-alpha(@hey-api/openapi-ts@0.95.0(typescript@6.0.2))(@trpc/server@11.13.1(typescript@6.0.2))(typescript@6.0.2)(zod@4.3.6)':
+  '@trpc/openapi@11.13.1-alpha(@hey-api/openapi-ts@0.95.0(typescript@5.9.3))(@trpc/server@11.13.1(typescript@5.9.3))(typescript@5.9.3)(zod@4.3.6)':
     dependencies:
-      '@trpc/server': 11.13.1(typescript@6.0.2)
-      typescript: 6.0.2
+      '@trpc/server': 11.13.1(typescript@5.9.3)
+      typescript: 5.9.3
     optionalDependencies:
-      '@hey-api/openapi-ts': 0.95.0(typescript@6.0.2)
+      '@hey-api/openapi-ts': 0.95.0(typescript@5.9.3)
       zod: 4.3.6
 
-  '@trpc/server@11.13.1(typescript@6.0.2)':
+  '@trpc/server@11.13.1(typescript@5.9.3)':
     dependencies:
-      typescript: 6.0.2
+      typescript: 5.9.3
 
   '@trpc/server@11.16.0(typescript@5.9.3)':
     dependencies:
       typescript: 5.9.3
-
-  '@trpc/server@11.16.0(typescript@6.0.2)':
-    dependencies:
-      typescript: 6.0.2
 
   '@types/amqplib@0.10.8':
     dependencies:
@@ -9218,8 +9303,6 @@ snapshots:
       fsevents: 2.3.3
 
   typescript@5.9.3: {}
-
-  typescript@6.0.2: {}
 
   ufo@1.6.3: {}
 

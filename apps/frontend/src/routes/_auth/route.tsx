@@ -11,8 +11,8 @@ export const Route = createFileRoute("/_auth")({
 
 function RouteComponent() {
 	return (
-		<div>
+		<div className="page-wrap">
 			<Outlet />
 		</div>
-	)
+	);
 }

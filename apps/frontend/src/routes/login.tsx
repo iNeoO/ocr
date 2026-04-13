@@ -146,8 +146,8 @@ function RouteComponent() {
 	return (
 		<AuthShell
 			eyebrow="Account access"
-			title="Sign in to continue."
-			description="Same flow, cleaner UI. The form now calls the server auth functions directly."
+			title="Reconnect to the processing deck."
+			description="Sign in to resume uploads, monitor pipeline states and pull finished archives from the same workspace."
 		>
 			<Flex direction="column" gap="4">
 				{errorMessage ? (
@@ -155,6 +155,7 @@ function RouteComponent() {
 						color={getCalloutColor(errorVariant)}
 						variant="soft"
 						size="2"
+						className="surface-callout"
 					>
 						<Callout.Icon>
 							<AlertTriangle size={16} />
@@ -171,6 +172,7 @@ function RouteComponent() {
 							color="amber"
 							onClick={handleResendValidationEmail}
 							disabled={isResending}
+							className="rounded-full"
 						>
 							{isResending ? "Sending..." : "Resend validation email"}
 						</Button>
@@ -178,7 +180,7 @@ function RouteComponent() {
 				) : null}
 
 				{resendSuccessMessage ? (
-					<Callout.Root color="green" variant="soft" size="2">
+					<Callout.Root color="green" variant="soft" size="2" className="surface-callout">
 						<Callout.Text>{resendSuccessMessage}</Callout.Text>
 					</Callout.Root>
 				) : null}
@@ -195,6 +197,7 @@ function RouteComponent() {
 									mt="2"
 									size="3"
 									type="email"
+									className="rounded-[18px]"
 									value={loginEmail}
 									onChange={(e) => setLoginEmail(e.target.value)}
 									placeholder="you@example.com"
@@ -220,6 +223,7 @@ function RouteComponent() {
 									mt="2"
 									size="3"
 									type="password"
+									className="rounded-[18px]"
 									value={loginPassword}
 									onChange={(e) => setLoginPassword(e.target.value)}
 									placeholder="Enter your password"
@@ -236,7 +240,7 @@ function RouteComponent() {
 								) : null}
 							</Box>
 
-							<Button type="submit" size="3" disabled={isSubmitting}>
+							<Button type="submit" size="3" disabled={isSubmitting} className="rounded-full">
 								{isSubmitting ? "Signing in..." : "Sign in"}
 							</Button>
 						</Flex>
@@ -244,7 +248,7 @@ function RouteComponent() {
 				</Box>
 
 				<Separator size="4" />
-				<Text size="2" color="gray">
+				<Text size="2" className="text-(--text-muted)">
 					<Link asChild underline="always" color="orange">
 						<RouterLink to="/password-forgotten">Forgot password?</RouterLink>
 					</Link>

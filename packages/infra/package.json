@@ -6,23 +6,23 @@
   "exports": {
     ".": {
       "types": "./src/index.ts",
-      "default": "./src/index.ts"
+      "default": "./dist/index.js"
     },
     "./configs": {
       "types": "./src/configs/index.ts",
-      "default": "./src/configs/index.ts"
+      "default": "./dist/configs/index.js"
     },
     "./redis": {
       "types": "./src/redis/index.ts",
-      "default": "./src/redis/index.ts"
+      "default": "./dist/redis/index.js"
     },
     "./libs": {
       "types": "./src/libs/index.ts",
-      "default": "./src/libs/index.ts"
+      "default": "./dist/libs/index.js"
     },
     "./s3": {
       "types": "./src/s3/index.ts",
-      "default": "./src/s3/index.ts"
+      "default": "./dist/s3/index.js"
     }
   },
   "scripts": {

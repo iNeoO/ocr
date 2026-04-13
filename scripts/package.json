@@ -4,6 +4,8 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
+    "build": "rm -rf dist && tsc",
+    "clean-processes": "node --import tsx ./src/clean-processes.ts",
     "generate-openapi": "node ./src/generate-openapi.ts",
     "serve-openapi": "node ./src/serve-openapi.ts"
   },
@@ -12,10 +14,16 @@
   "license": "ISC",
   "packageManager": "pnpm@10.33.0",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1026.0",
+    "@ocr/db": "workspace:*",
+    "@ocr/infra": "workspace:*",
     "@trpc/openapi": "11.13.1-alpha",
+    "drizzle-orm": "^0.45.2",
     "superjson": "^2.2.6"
   },
   "devDependencies": {
-    "@types/node": "catalog:"
+    "@types/node": "catalog:",
+    "typescript": "catalog:",
+    "tsx": "^4.21.0"
   }
 }

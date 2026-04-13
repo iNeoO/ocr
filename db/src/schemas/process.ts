@@ -7,6 +7,7 @@ export const processStatus = pgEnum("process_status", [
 	"pending",
 	"splitting",
 	"processing",
+	"post_processing",
 	"finalizing",
 	"completed",
 	"failed",
@@ -36,7 +37,10 @@ export const process = pgTable("process", {
 	updatedAt: t
 		.timestamp("updated_at", { precision: 6, withTimezone: true })
 		.notNull(),
-	completedAt: t.timestamp("completed_at", { precision: 6, withTimezone: true }),
+	completedAt: t.timestamp("completed_at", {
+		precision: 6,
+		withTimezone: true,
+	}),
 	errorAt: t.timestamp("error_at", { precision: 6, withTimezone: true }),
 	error: t.text("error"),
 });

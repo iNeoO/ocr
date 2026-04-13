@@ -5,7 +5,7 @@ type ThemeMode = "light" | "dark";
 
 function getInitialMode(): ThemeMode {
 	if (typeof window === "undefined") {
-		return "light";
+		return "dark";
 	}
 
 	const stored = window.localStorage.getItem("theme");
@@ -13,7 +13,7 @@ function getInitialMode(): ThemeMode {
 		return stored;
 	}
 
-	return "light";
+	return "dark";
 }
 
 function applyThemeMode(mode: ThemeMode) {
@@ -25,7 +25,7 @@ function applyThemeMode(mode: ThemeMode) {
 }
 
 export default function ThemeToggle() {
-	const [mode, setMode] = useState<ThemeMode>("light");
+	const [mode, setMode] = useState<ThemeMode>("dark");
 
 	useEffect(() => {
 		const initialMode = getInitialMode();
@@ -48,8 +48,11 @@ export default function ThemeToggle() {
 			onClick={toggleMode}
 			aria-label={label}
 			title={label}
-			className="rounded-full border border-(--chip-line) bg-(--chip-bg) px-3 py-1.5 text-sm font-semibold text-(--sea-ink) shadow-[0_8px_22px_rgba(30,90,72,0.08)] transition hover:-translate-y-0.5"
+			className="inline-flex items-center gap-2 rounded-full border border-(--line) bg-(--bg-panel-soft) px-3 py-2 text-(--text-strong) hover:-translate-y-0.5 hover:border-(--line-strong)"
 		>
+			<span className="mono-label hidden text-[0.62rem] tracking-[0.18em] sm:inline">
+				{mode === "dark" ? "night deck" : "paper deck"}
+			</span>
 			{mode === "dark" ? (
 				<Moon size={16} aria-hidden="true" />
 			) : (

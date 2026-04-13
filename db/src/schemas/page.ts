@@ -6,6 +6,7 @@ import { process } from "./process.js";
 export const pageStatus = pgEnum("page_status", [
 	"pending",
 	"processing",
+	"post_processing",
 	"completed",
 	"failed",
 ]);

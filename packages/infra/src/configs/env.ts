@@ -28,6 +28,11 @@ export const envSchema = z.object({
 	AMQ_SPLIT_PDF_PREFETCH: z.coerce.number().default(5),
 	AMQ_TRANSCRIBE_JPG_QUEUE: z.string().default("transcribe-jpg-jobs"),
 	AMQ_TRANSCRIBE_JPG_PREFETCH: z.coerce.number().default(5),
+	AMQ_POST_PROCESS_PAGE_QUEUE: z.string().default("post-process-page-jobs"),
+	AMQ_POST_PROCESS_PAGE_PREFETCH: z.coerce.number().default(5),
+	LLM_URL: z.url(),
+	LLM_MODEL: z.string().default("qwen2.5vl:7b"),
+	LLM_TIMEOUT_MS: z.coerce.number().default(900000),
 });
 
 export const env = envSchema.parse(process.env);

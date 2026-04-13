@@ -1,16 +1,29 @@
 import type { AppRouter } from "@ocr/backend/appRouter";
-import { createTRPCClient, httpLink } from "@trpc/client";
+import {
+	createTRPCClient,
+	httpLink,
+	httpSubscriptionLink,
+	splitLink,
+} from "@trpc/client";
 
 export const trpc = createTRPCClient<AppRouter>({
 	links: [
-		httpLink({
-			url: "/trpc",
-			fetch(url, options) {
-				return fetch(url, {
-					...options,
-					credentials: "include",
-				});
+		splitLink({
+			condition(op) {
+				return op.type === "subscription";
 			},
+			true: httpSubscriptionLink({
+				url: "/trpc",
+			}),
+			false: httpLink({
+				url: "/trpc",
+				fetch(url, options) {
+					return fetch(url, {
+						...options,
+						credentials: "include",
+					});
+				},
+			}),
 		}),
 	],
 });

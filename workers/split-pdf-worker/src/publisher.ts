@@ -1,14 +1,10 @@
 import { getLoggerStore } from "@ocr/infra";
+import { env } from "@ocr/infra/configs";
 import amqp from "amqplib";
 import {
 	type SplitPdfJobData,
 	splitPdfJobDataSchema,
 } from "./contracts/split-pdf.schema.js";
-
-type SplitPdfPublisherOptions = {
-	amqpUrl: string;
-	queue: string;
-};
 
 export class SplitPdfPublisher {
 	private amqpUrl: string;
@@ -16,9 +12,9 @@ export class SplitPdfPublisher {
 	private connection?: amqp.ChannelModel;
 	private channelPromise?: Promise<amqp.Channel>;
 
-	constructor(options: SplitPdfPublisherOptions) {
-		this.amqpUrl = options.amqpUrl;
-		this.queue = options.queue;
+	constructor() {
+		this.amqpUrl = env.AMQP_URL;
+		this.queue = env.AMQ_SPLIT_PDF_QUEUE;
 	}
 
 	private async getChannel() {

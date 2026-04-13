@@ -38,10 +38,10 @@ export const startConsumer = async ({
 	};
 
 	process.on("SIGINT", () => {
-		void close("SIGINT");
+		close("SIGINT");
 	});
 	process.on("SIGTERM", () => {
-		void close("SIGTERM");
+		close("SIGTERM");
 	});
 
 	await channel.consume(

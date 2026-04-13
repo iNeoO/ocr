@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
+    "@ocr/common": "workspace:*",
     "@ocr/db": "workspace:*",
     "@ocr/backend": "workspace:*",
     "@ocr/infra": "workspace:*",

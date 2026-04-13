@@ -2,7 +2,6 @@ import { createServer } from "node:http";
 import { pinoLogger } from "@ocr/infra";
 import { env } from "@ocr/infra/configs";
 import { nodeHTTPRequestHandler } from "@trpc/server/adapters/node-http";
-
 import { AppRouterBuilder } from "./appRouter.js";
 import { getOpenApiHtml, getOpenApiJson } from "./libs/openapi.lib.js";
 import { services } from "./services/container.js";
@@ -10,8 +9,9 @@ import { ContextBuilder } from "./trpc.js";
 
 const appRouter = new AppRouterBuilder(
 	services.authService,
-	services.processesService,
+	services.processService,
 	services.filesService,
+	services.processStatusPubSubService,
 ).create();
 const shouldExposeOpenApiUi = env.NODE_ENV !== "production";
 
@@ -79,6 +79,7 @@ const gracefulShutdown = async (signal: string) => {
 	await services.redis.quit();
 	await services.splitPdfPublisher.close();
 	await services.transcribeJpgPublisher.close();
+	await services.postProcessPagePublisher.close();
 };
 
 process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));

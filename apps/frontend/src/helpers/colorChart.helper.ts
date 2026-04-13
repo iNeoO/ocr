@@ -7,6 +7,7 @@ export const getProcessStatusColor = (status: UserProcess["status"]) => {
 		case "failed":
 			return "red";
 		case "processing":
+		case "post_processing":
 		case "splitting":
 		case "finalizing":
 			return "orange";

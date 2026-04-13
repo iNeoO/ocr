@@ -7,14 +7,10 @@ import {
 import { type Database, schema } from "@ocr/db";
 import { getLoggerStore } from "@ocr/infra";
 import { s3, s3Config } from "@ocr/infra/s3";
-import { inArray } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { PDFParse } from "pdf-parse";
 import { fileToNodeStream } from "./files.helpers.js";
-
-export type SplitPageImage = {
-	pageNumber: number;
-	imageFileId: string;
-};
+import type { SplitPageImage } from "./files.type.js";
 
 export class FilesService {
 	private readonly db: Database;
@@ -84,6 +80,45 @@ export class FilesService {
 		return response.Body.transformToByteArray();
 	}
 
+	async getFileText(fileId: string) {
+		const buffer = await this.getFileBuffer(fileId);
+		return Buffer.from(buffer).toString("utf-8");
+	}
+
+	async replaceFileContent(fileId: string, content: string | Uint8Array) {
+		const file = await this.getFileById(fileId);
+		if (!file) {
+			throw new Error("File not found");
+		}
+
+		const body =
+			typeof content === "string"
+				? Buffer.from(content, "utf-8")
+				: Buffer.from(content);
+		const now = new Date();
+
+		await s3.send(
+			new PutObjectCommand({
+				Bucket: file.bucket,
+				Key: file.objectKey,
+				Body: body,
+				ContentLength: body.length,
+				ContentType: file.mimeType,
+			}),
+		);
+
+		const [updatedFile] = await this.db
+			.update(schema.file)
+			.set({
+				size: body.length,
+				updatedAt: now,
+			})
+			.where(eq(schema.file.id, fileId))
+			.returning();
+
+		return updatedFile;
+	}
+
 	async deleteFiles(fileIds: string[]) {
 		const uniqueFileIds = [...new Set(fileIds.filter(Boolean))];
 		if (uniqueFileIds.length === 0) {
@@ -108,7 +143,9 @@ export class FilesService {
 			);
 		}
 
-		await this.db.delete(schema.file).where(inArray(schema.file.id, uniqueFileIds));
+		await this.db
+			.delete(schema.file)
+			.where(inArray(schema.file.id, uniqueFileIds));
 	}
 
 	async splitFileIntoPages(fileId: string) {

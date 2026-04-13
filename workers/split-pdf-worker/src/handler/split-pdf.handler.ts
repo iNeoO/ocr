@@ -12,9 +12,31 @@ export const createSplitWorker = ({
 		const logger = getLoggerStore();
 		const startedAt = new Date();
 		logger.info({ processId }, "Starting PDF split job");
-		await processService.splitSourceFileIntoPages(processId);
-		const finishedAt = new Date();
-		const duration = finishedAt.getTime() - startedAt.getTime();
-		logger.info({ processId, duration }, "Finished PDF split job");
+		try {
+			await processService.splitSourceFileIntoPages(processId);
+			const finishedAt = new Date();
+			const duration = finishedAt.getTime() - startedAt.getTime();
+			await processService.publishProcessStatusEvent({
+				processId,
+				stage: "split_pdf",
+				status: "success",
+				durationMs: duration,
+				message: "PDF split completed",
+			});
+			logger.info({ processId, duration }, "Finished PDF split job");
+		} catch (error) {
+			const finishedAt = new Date();
+			const duration = finishedAt.getTime() - startedAt.getTime();
+			const message =
+				error instanceof Error ? error.message : "PDF split failed";
+			await processService.publishProcessStatusEvent({
+				processId,
+				stage: "split_pdf",
+				status: "failed",
+				durationMs: duration,
+				message,
+			});
+			throw error;
+		}
 	};
 };

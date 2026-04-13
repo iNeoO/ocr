@@ -5,27 +5,24 @@
     "dev": "tsx watch --clear-screen=false src/index.ts",
     "start": "node dist/index.js",
     "lint": "biome check",
-    "build": "rm -rf dist && tsc"
+    "build": "rm -rf dist && tsc -p tsconfig.build.json"
   },
   "dependencies": {
     "amqplib": "catalog:",
     "@ocr/db": "workspace:*",
     "@ocr/infra": "workspace:*",
+    "@ocr/post-process-page-worker": "workspace:*",
     "@ocr/services": "workspace:*",
     "zod": "catalog:"
   },
   "exports": {
     ".": {
-      "import": {
-        "types": "./src/index.ts",
-        "default": "./src/index.ts"
-      }
+      "types": "./src/index.ts",
+      "default": "./dist/index.js"
     },
     "./publisher": {
-      "import": {
-        "types": "./publisher.ts",
-        "default": "./publisher.ts"
-      }
+      "types": "./src/publisher.ts",
+      "default": "./dist/publisher.js"
     }
   },
   "devDependencies": {

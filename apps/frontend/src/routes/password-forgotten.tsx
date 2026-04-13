@@ -70,8 +70,8 @@ function RouteComponent() {
 	return (
 		<AuthShell
 			eyebrow="Recovery"
-			title="Request a reset link."
-			description="A lighter recovery screen wired to the new server auth API."
+			title="Request a fresh access path."
+			description="If the account exists, a reset link will be issued so you can re-enter the workspace without breaking the current auth flow."
 			footer={
 				<>
 					Remembered your password?{" "}
@@ -83,13 +83,13 @@ function RouteComponent() {
 		>
 			<Flex direction="column" gap="4">
 				{errorMessage ? (
-					<Callout.Root color="red" variant="soft" size="2">
+					<Callout.Root color="red" variant="soft" size="2" className="surface-callout">
 						<Callout.Text>{errorMessage}</Callout.Text>
 					</Callout.Root>
 				) : null}
 
 				{isSubmitted ? (
-					<Callout.Root color="green" variant="soft" size="2">
+					<Callout.Root color="green" variant="soft" size="2" className="surface-callout">
 						<Callout.Text>
 							If this email exists, we sent a reset link.
 						</Callout.Text>
@@ -107,6 +107,7 @@ function RouteComponent() {
 										mt="2"
 										size="3"
 										type="email"
+										className="rounded-[18px]"
 										value={email}
 										onChange={(e) => setEmail(e.target.value)}
 										required
@@ -123,7 +124,7 @@ function RouteComponent() {
 									) : null}
 								</Box>
 
-								<Button type="submit" size="3" disabled={isSubmitting}>
+								<Button type="submit" size="3" disabled={isSubmitting} className="rounded-full">
 									{isSubmitting ? "Sending..." : "Send reset link"}
 								</Button>
 							</Flex>

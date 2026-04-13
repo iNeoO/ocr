@@ -100,8 +100,8 @@ function RouteComponent() {
 	return (
 		<AuthShell
 			eyebrow="Security"
-			title="Choose a new password."
-			description="The reset flow is now wired to the server reset function."
+			title="Set a new secure key."
+			description="Choose a replacement password and return to the same deck without changing any backend auth contract."
 			footer={
 				<>
 					Need the login page instead?{" "}
@@ -113,20 +113,20 @@ function RouteComponent() {
 		>
 			<Flex direction="column" gap="4">
 				{errorMessage ? (
-					<Callout.Root color="red" variant="soft" size="2">
+					<Callout.Root color="red" variant="soft" size="2" className="surface-callout">
 						<Callout.Text>{errorMessage}</Callout.Text>
 					</Callout.Root>
 				) : null}
 
 				{isSubmitted ? (
 					<Flex direction="column" gap="4">
-						<Callout.Root color="green" variant="soft" size="2">
+						<Callout.Root color="green" variant="soft" size="2" className="surface-callout">
 							<Callout.Text>
 								Password reset successful. You can now sign in.
 							</Callout.Text>
 						</Callout.Root>
 						<Flex>
-							<Button asChild size="3">
+							<Button asChild size="3" className="rounded-full">
 								<RouterLink to="/login">Go to login</RouterLink>
 							</Button>
 						</Flex>
@@ -149,6 +149,7 @@ function RouteComponent() {
 										mt="2"
 										size="3"
 										type="password"
+										className="rounded-[18px]"
 										value={password}
 										onChange={(event) => setPassword(event.target.value)}
 										required
@@ -178,6 +179,7 @@ function RouteComponent() {
 										mt="2"
 										size="3"
 										type="password"
+										className="rounded-[18px]"
 										value={confirmPassword}
 										onChange={(event) => setConfirmPassword(event.target.value)}
 										required
@@ -193,7 +195,7 @@ function RouteComponent() {
 									) : null}
 								</Box>
 
-								<Button type="submit" size="3" disabled={isSubmitting}>
+								<Button type="submit" size="3" disabled={isSubmitting} className="rounded-full">
 									{isSubmitting ? "Resetting..." : "Reset password"}
 								</Button>
 							</Flex>

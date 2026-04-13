@@ -5,8 +5,10 @@ import {
 	Link,
 	Scripts,
 } from "@tanstack/react-router";
+import type { CSSProperties } from "react";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
+import { ToastProvider } from "../components/toast/ToastProvider";
 import { type AuthSession, getSession } from "../libs/api/auth";
 
 import appCss from "../styles.css?url";
@@ -23,7 +25,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 				session,
 			};
 		} catch (error) {
-			console.log(error);
+			console.error("Failed to load session", error);
 			return {
 				session: null,
 			};
@@ -59,17 +61,21 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 			<head>
 				<HeadContent />
 			</head>
-			<body className="font-sans antialiased wrap-anywhere selection:bg-[rgba(249,115,22,0.22)]">
+			<body className="font-sans antialiased wrap-anywhere">
 				<Theme
 					accentColor="orange"
-					grayColor="sage"
+					grayColor="slate"
 					radius="large"
 					scaling="100%"
 					appearance="inherit"
 				>
-					<Header />
-					{children}
-					<Footer />
+					<ToastProvider>
+						<div className="app-shell min-h-screen">
+							<Header />
+							{children}
+							<Footer />
+						</div>
+					</ToastProvider>
 				</Theme>
 				<Scripts />
 			</body>
@@ -79,18 +85,25 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 
 function NotFoundPage() {
 	return (
-		<main className="page-wrap px-4 py-16 sm:py-24">
-			<div className="island-shell rounded-4xl px-6 py-10 sm:px-10 sm:py-14">
-				<p className="island-kicker mb-3">404</p>
-				<h1 className="display-title m-0 text-4xl sm:text-5xl">
+		<main className="page-wrap px-4 py-14 sm:py-20">
+			<div className="hero-panel grid-noise rounded-[28px] px-6 py-10 sm:px-10 sm:py-14">
+				<p className="section-kicker mb-3 stagger-enter">404</p>
+				<h1
+					className="display-title glow-line m-0 text-4xl sm:text-5xl stagger-enter"
+					style={{ "--stagger-delay": "80ms" } as CSSProperties}
+				>
 					Page not found
 				</h1>
-				<p className="mt-4 max-w-[48ch] text-(--sea-ink-soft)">
+				<p
+					className="mt-4 max-w-[48ch] text-(--text-muted) stagger-enter"
+					style={{ "--stagger-delay": "140ms" } as CSSProperties}
+				>
 					The page you requested does not exist or is no longer available.
 				</p>
 				<Link
 					to="/"
-					className="mt-6 inline-flex rounded-full border border-(--chip-line) bg-(--chip-bg) px-4 py-2 font-semibold text-(--sea-ink) no-underline"
+					className="terminal-button mt-8 stagger-enter"
+					style={{ "--stagger-delay": "200ms" } as CSSProperties}
 				>
 					Go back home
 				</Link>

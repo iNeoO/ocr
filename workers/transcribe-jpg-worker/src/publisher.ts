@@ -3,7 +3,7 @@ import amqp from "amqplib";
 import {
 	type TranscribeJpgJobData,
 	transcribeJpgJobDataSchema,
-} from "./src/contracts/transcribe-jpg.schema.js";
+} from "./contracts/transcribe-jpg.schema.js";
 
 type TranscribeJpgPublisherOptions = {
 	amqpUrl: string;

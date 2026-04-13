@@ -9,6 +9,7 @@ export type UpdateProcessStatusInput = {
 		| "pending"
 		| "splitting"
 		| "processing"
+		| "post_processing"
 		| "finalizing"
 		| "completed"
 		| "failed";

@@ -87,12 +87,12 @@ function RouteComponent() {
 	return (
 		<AuthShell
 			eyebrow="New account"
-			title="Create your workspace entry point."
-			description="This page now uses the server signup function directly."
+			title="Open a new operator seat."
+			description="Create your account to start document intake, track jobs in flight and centralize finished OCR exports."
 		>
 			<Flex direction="column" gap="4">
 				{errorMessage ? (
-					<Callout.Root color="red" variant="soft" size="2">
+					<Callout.Root color="red" variant="soft" size="2" className="surface-callout">
 						<Callout.Text>{errorMessage}</Callout.Text>
 					</Callout.Root>
 				) : null}
@@ -109,6 +109,7 @@ function RouteComponent() {
 									mt="2"
 									size="3"
 									type="text"
+									className="rounded-[18px]"
 									value={signupName}
 									onChange={(e) => setSignupName(e.target.value)}
 									required
@@ -133,6 +134,7 @@ function RouteComponent() {
 									mt="2"
 									size="3"
 									type="email"
+									className="rounded-[18px]"
 									value={signupEmail}
 									onChange={(e) => setSignupEmail(e.target.value)}
 									required
@@ -157,6 +159,7 @@ function RouteComponent() {
 									mt="2"
 									size="3"
 									type="password"
+									className="rounded-[18px]"
 									value={signupPassword}
 									onChange={(e) => setSignupPassword(e.target.value)}
 									required
@@ -172,7 +175,7 @@ function RouteComponent() {
 								) : null}
 							</Box>
 
-							<Button type="submit" size="3" disabled={isSubmitting}>
+							<Button type="submit" size="3" disabled={isSubmitting} className="rounded-full">
 								{isSubmitting ? "Creating..." : "Create account"}
 							</Button>
 						</Flex>

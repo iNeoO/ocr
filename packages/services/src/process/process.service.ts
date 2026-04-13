@@ -1,28 +1,28 @@
 import { randomUUID } from "node:crypto";
 import { type Database, schema } from "@ocr/db";
 import { getLoggerStore } from "@ocr/infra";
+import type { SplitPdfPublisher } from "@ocr/split-pdf-worker/publisher";
+import type { TranscribeJpgPublisher } from "@ocr/transcribe-jpg-worker/publisher";
 import { APIError } from "better-auth/api";
 import { and, asc, count, desc, eq, gte, lt } from "drizzle-orm";
 import JSZip from "jszip";
 import type { FilesService } from "../files/files.service.js";
 import type {
+	ProcessNotificationContext,
+	PublishProcessStatusEventInput,
+} from "../process-status/process-status.types.js";
+import type { ProcessStatusPubSubService } from "../process-status/process-status-pubsub.service.js";
+import type {
 	CreateProcessInput,
 	UpdateProcessStatusInput,
 } from "./process.types.js";
-
-type SplitPdfPublisher = {
-	publish(message: { processId: string }): Promise<void>;
-};
-
-type TranscribeJpgPublisher = {
-	publish(message: { pageId: string }): Promise<void>;
-};
 
 type ProcessServiceDependencies = {
 	db: Database;
 	filesService: FilesService;
 	splitPdfPublisher?: SplitPdfPublisher;
 	transcribeJpgPublisher?: TranscribeJpgPublisher;
+	processStatusPubSubService?: ProcessStatusPubSubService;
 };
 
 export class ProcessService {
@@ -32,17 +32,20 @@ export class ProcessService {
 	private readonly filesService: FilesService;
 	private readonly splitPdfPublisher?: SplitPdfPublisher;
 	private readonly transcribeJpgPublisher?: TranscribeJpgPublisher;
+	private readonly processStatusPubSubService?: ProcessStatusPubSubService;
 
 	constructor({
 		db,
 		filesService,
 		splitPdfPublisher,
 		transcribeJpgPublisher,
+		processStatusPubSubService,
 	}: ProcessServiceDependencies) {
 		this.db = db;
 		this.filesService = filesService;
 		this.splitPdfPublisher = splitPdfPublisher;
 		this.transcribeJpgPublisher = transcribeJpgPublisher;
+		this.processStatusPubSubService = processStatusPubSubService;
 	}
 
 	private getTodayWindow() {
@@ -108,6 +111,56 @@ export class ProcessService {
 		return process;
 	}
 
+	async getProcessNotificationContextByProcessId(
+		processId: string,
+	): Promise<ProcessNotificationContext> {
+		const process = await this.db
+			.select({
+				processId: schema.process.id,
+				userId: schema.process.userId,
+				sourceFileName: schema.file.filename,
+			})
+			.from(schema.process)
+			.innerJoin(schema.file, eq(schema.process.sourceFileId, schema.file.id))
+			.where(eq(schema.process.id, processId))
+			.limit(1)
+			.then((rows) => rows[0]);
+
+		if (!process) {
+			throw new Error("Process not found");
+		}
+
+		return {
+			userId: process.userId,
+			processId: process.processId,
+			processName: process.processId,
+			sourceFileName: process.sourceFileName,
+		};
+	}
+
+	async publishProcessStatusEvent({
+		processId,
+		stage,
+		status,
+		durationMs,
+		message,
+	}: PublishProcessStatusEventInput) {
+		if (!this.processStatusPubSubService) {
+			return;
+		}
+
+		const context =
+			await this.getProcessNotificationContextByProcessId(processId);
+		await this.processStatusPubSubService.publishProcessStatusEvent({
+			...context,
+			stage,
+			status,
+			durationMs,
+			message,
+			occurredAt: new Date().toISOString(),
+		});
+	}
+
 	async getProcessesByUserId(userId: string) {
 		const processes = await this.db
 			.select({
@@ -152,6 +205,22 @@ export class ProcessService {
 			});
 		}
 
+		const processSourceFile = await this.db
+			.select({
+				sourceFileName: schema.file.filename,
+			})
+			.from(schema.process)
+			.innerJoin(schema.file, eq(schema.process.sourceFileId, schema.file.id))
+			.where(eq(schema.process.id, processId))
+			.limit(1)
+			.then((rows) => rows[0]);
+
+		if (!processSourceFile) {
+			throw new APIError("NOT_FOUND", {
+				message: "Source file not found",
+			});
+		}
+
 		const pages = await this.db
 			.select({
 				pageNumber: schema.page.pageNumber,
@@ -183,7 +252,7 @@ export class ProcessService {
 		});
 
 		return {
-			filename: `process-${processId}.zip`,
+			filename: `${processSourceFile.sourceFileName.replace(/\.[^.]+$/, "")}.zip`,
 			buffer: archive,
 		};
 	}
@@ -232,14 +301,21 @@ export class ProcessService {
 			"Deleting process and related files",
 		);
 
-		await this.db.delete(schema.process).where(
-			and(eq(schema.process.id, processId), eq(schema.process.userId, userId)),
-		);
+		await this.db
+			.delete(schema.process)
+			.where(
+				and(
+					eq(schema.process.id, processId),
+					eq(schema.process.userId, userId),
+				),
+			);
 		await this.filesService.deleteFiles(fileIds);
 	}
 
 	async cleanupExpiredProcesses() {
-		const cutoff = new Date(Date.now() - ProcessService.RETENTION_DAYS * 24 * 60 * 60 * 1000);
+		const cutoff = new Date(
+			Date.now() - ProcessService.RETENTION_DAYS * 24 * 60 * 60 * 1000,
+		);
 		const expiredCompletedProcesses = await this.db
 			.select({
 				id: schema.process.id,
@@ -254,7 +330,7 @@ export class ProcessService {
 					eq(schema.process.status, "completed"),
 					lt(schema.process.completedAt, cutoff),
 				),
-			)
+			);
 		const expiredFailedProcesses = await this.db
 			.select({
 				id: schema.process.id,
@@ -390,6 +466,7 @@ export class ProcessService {
 	}
 
 	async completeProcess(processId: string, completedPages: number) {
+		const previousProcess = await this.getProcessById(processId);
 		const now = new Date();
 		const [updatedProcess] = await this.db
 			.update(schema.process)
@@ -398,14 +475,28 @@ export class ProcessService {
 				isRunning: false,
 				completedPages,
 				completedAt: now,
+				error: null,
+				errorAt: null,
 				updatedAt: now,
 			})
 			.where(eq(schema.process.id, processId))
 			.returning();
+
+		if (previousProcess?.status !== "completed") {
+			await this.publishProcessStatusEvent({
+				processId,
+				stage: "process_completed",
+				status: "success",
+				durationMs: 0,
+				message: "Process completed",
+			});
+		}
+
 		return updatedProcess;
 	}
 
 	async failProcess(processId: string, error: string) {
+		const previousProcess = await this.getProcessById(processId);
 		const now = new Date();
 		const [updatedProcess] = await this.db
 			.update(schema.process)
@@ -414,10 +505,25 @@ export class ProcessService {
 				isRunning: false,
 				error,
 				errorAt: now,
+				completedAt: null,
 				updatedAt: now,
 			})
 			.where(eq(schema.process.id, processId))
 			.returning();
+
+		if (
+			previousProcess?.status !== "failed" ||
+			previousProcess.error !== error
+		) {
+			await this.publishProcessStatusEvent({
+				processId,
+				stage: "process_failed",
+				status: "failed",
+				durationMs: 0,
+				message: error,
+			});
+		}
+
 		return updatedProcess;
 	}
 

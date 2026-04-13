@@ -1,6 +1,6 @@
 export type UpdatePageStatusInput = {
 	id: string;
-	status: "pending" | "processing" | "completed" | "failed";
+	status: "pending" | "processing" | "post_processing" | "completed" | "failed";
 	error?: string | null;
 	markdownFileId?: string | null;
 };

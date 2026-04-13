@@ -6,23 +6,21 @@ export default function Header() {
 	const { session } = RootRoute.useRouteContext();
 
 	return (
-		<header className="sticky top-0 z-50 border-b border-(--line) bg-(--header-bg) px-4 backdrop-blur-lg">
-			<nav className="page-wrap flex flex-wrap items-center gap-x-3 gap-y-2 py-3 sm:py-4">
+		<header className="sticky top-0 z-50 px-3 pt-3 sm:px-4">
+			<nav className="page-wrap data-panel flex flex-wrap items-center gap-x-4 gap-y-3 rounded-[24px] px-4 py-3 sm:px-5">
 				<h2 className="m-0 shrink-0 text-base font-semibold tracking-tight">
 					<Link
 						to="/"
-						className="inline-flex items-center gap-2 rounded-full border border-(--chip-line) bg-(--chip-bg) px-3 py-1.5 text-sm text-(--sea-ink) no-underline shadow-[0_8px_24px_rgba(30,90,72,0.08)] sm:px-4 sm:py-2"
+						className="inline-flex items-center gap-3 rounded-full border border-(--line-strong) bg-(--accent-soft) px-3 py-2 text-sm text-(--text-strong) no-underline sm:px-4"
 					>
-						<span className="h-2 w-2 rounded-full bg-[linear-gradient(90deg,#f97316,#fb923c)]" />
-						OCR
+						<span className="h-2.5 w-2.5 rounded-full bg-[linear-gradient(135deg,var(--accent),#ffe1c5)] shadow-[0_0_18px_rgba(255,158,88,0.65)]" />
+						<span className="mono-label text-[0.7rem] tracking-[0.22em]">
+							OCR // deck
+						</span>
 					</Link>
 				</h2>
 
-				<div className="ml-auto flex items-center gap-1.5 sm:ml-0 sm:gap-2">
-					<ThemeToggle />
-				</div>
-
-				<div className="order-3 flex w-full flex-wrap items-center gap-x-4 gap-y-1 pb-1 text-sm font-semibold sm:order-2 sm:w-auto sm:flex-nowrap sm:pb-0">
+				<div className="order-3 flex w-full flex-wrap items-center gap-x-5 gap-y-1 text-sm font-semibold sm:order-2 sm:ml-6 sm:w-auto sm:flex-1">
 					<Link
 						to="/"
 						className="nav-link"
@@ -57,6 +55,15 @@ export default function Header() {
 							</Link>
 						</>
 					) : null}
+				</div>
+
+				<div className="ml-auto flex items-center gap-2">
+					<div className="hidden rounded-full border border-(--line) px-3 py-2 sm:flex">
+						<span className="nav-label text-[0.66rem] text-(--text-faint)">
+							live workspace
+						</span>
+					</div>
+					<ThemeToggle />
 				</div>
 			</nav>
 		</header>

@@ -5,13 +5,14 @@
   "description": "",
   "scripts": {
     "dev": "tsx watch --clear-screen=false ./src/index.ts",
-    "build": "tsc",
+    "build": "rm -rf dist && tsc",
+    "start": "node dist/index.js",
     "lint": "biome check"
   },
   "exports": {
     "./appRouter": {
       "types": "./src/appRouter.ts",
-      "default": "./src/appRouter.ts"
+      "default": "./dist/appRouter.js"
     }
   },
   "keywords": [],
@@ -19,17 +20,20 @@
   "license": "ISC",
   "packageManager": "pnpm@10.33.0",
   "dependencies": {
+    "@ocr/common": "workspace:*",
     "@ocr/db": "workspace:*",
     "@ocr/infra": "workspace:*",
     "@ocr/services": "workspace:*",
     "@ocr/split-pdf-worker": "workspace:*",
     "@ocr/transcribe-jpg-worker": "workspace:*",
+    "@ocr/post-process-page-worker": "workspace:*",
     "@trpc/server": "catalog:",
     "zod": "catalog:",
     "zod-form-data": "^3.0.1"
   },
   "devDependencies": {
     "@types/node": "catalog:",
+    "typescript": "catalog:",
     "tsx": "catalog:"
   }
 }

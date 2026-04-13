@@ -1,5 +1,5 @@
-import cron from "node-cron";
 import { loggerStorage, pinoLogger } from "@ocr/infra/libs";
+import cron from "node-cron";
 import { createContainer } from "./container.js";
 
 const CRON_SCHEDULE = "0 */2 * * *";
@@ -47,10 +47,10 @@ const start = async () => {
 	};
 
 	process.on("SIGINT", () => {
-		void close("SIGINT");
+		close("SIGINT");
 	});
 	process.on("SIGTERM", () => {
-		void close("SIGTERM");
+		close("SIGTERM");
 	});
 
 	await loggerStorage.run(workerLogger, async () => {
