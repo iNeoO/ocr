@@ -11,6 +11,7 @@ import type { NodeHTTPCreateContextFnOptions } from "@trpc/server/adapters/node-
 import { ZodError, z } from "zod";
 import { createUnauthorizedError } from "./helpers/errors.helpers.js";
 import { toHeaders } from "./helpers/headers.helpers.js";
+import { observeTrpcRequest, trackTrpcSubscription } from "./metrics.js";
 
 const UNKNOWN_VALUE = "unknown";
 
@@ -75,6 +76,7 @@ export const publicProcedure = t.procedure;
 
 export const loggedProcedure = publicProcedure.use(async (opts) => {
 	const startedAt = Date.now();
+	let result: "success" | "error" = "success";
 	const logger = opts.ctx.logger.child({
 		trpc: {
 			path: opts.path || UNKNOWN_VALUE,
@@ -84,13 +86,23 @@ export const loggedProcedure = publicProcedure.use(async (opts) => {
 
 	return loggerStorage.run(logger, async () => {
 		try {
-			return await opts.next({
+			const nextResult = await opts.next({
 				ctx: {
 					...opts.ctx,
 					logger,
 				},
 			});
+			if (opts.type === "subscription") {
+				const endSubscriptionMetric = trackTrpcSubscription(
+					opts.path || UNKNOWN_VALUE,
+				);
+				opts.signal?.addEventListener("abort", endSubscriptionMetric, {
+					once: true,
+				});
+			}
+			return nextResult;
 		} catch (error) {
+			result = "error";
 			logger.error(
 				{
 					err: error,
@@ -100,6 +112,13 @@ export const loggedProcedure = publicProcedure.use(async (opts) => {
 			throw error;
 		} finally {
 			const durationMs = Date.now() - startedAt;
+			observeTrpcRequest({
+				procedure: opts.path || UNKNOWN_VALUE,
+				type: opts.type || UNKNOWN_VALUE,
+				statusCode: opts.ctx.res.statusCode,
+				durationMs,
+				result,
+			});
 			logHttpCompletion(logger, opts.ctx.res.statusCode, durationMs);
 		}
 	});

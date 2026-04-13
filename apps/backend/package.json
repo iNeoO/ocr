@@ -23,17 +23,18 @@
     "@ocr/common": "workspace:*",
     "@ocr/db": "workspace:*",
     "@ocr/infra": "workspace:*",
+    "@ocr/post-process-page-worker": "workspace:*",
     "@ocr/services": "workspace:*",
     "@ocr/split-pdf-worker": "workspace:*",
     "@ocr/transcribe-jpg-worker": "workspace:*",
-    "@ocr/post-process-page-worker": "workspace:*",
     "@trpc/server": "catalog:",
+    "prom-client": "^15.1.3",
     "zod": "catalog:",
     "zod-form-data": "^3.0.1"
   },
   "devDependencies": {
     "@types/node": "catalog:",
-    "typescript": "catalog:",
-    "tsx": "catalog:"
+    "tsx": "catalog:",
+    "typescript": "catalog:"
   }
 }
