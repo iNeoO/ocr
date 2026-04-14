@@ -25,15 +25,38 @@ export const createAuth = ({
 		...(url ? { url } : {}),
 		emailVerification: {
 			sendOnSignUp: true,
-			sendVerificationEmail: ({ user, url: verificationUrl }) =>
-				mailService.sendVerificationEmail({
+			sendOnSignIn: true,
+			sendVerificationEmail: ({ user, url: verificationUrl, token }) => {
+				const frontendVerificationUrl = (() => {
+					try {
+						const sourceUrl = new URL(verificationUrl);
+						const targetUrl = new URL("/validate-email", url ?? verificationUrl);
+						targetUrl.searchParams.set(
+							"token",
+							token ?? sourceUrl.searchParams.get("token") ?? "",
+						);
+
+						const callbackURL = sourceUrl.searchParams.get("callbackURL");
+						if (callbackURL) {
+							targetUrl.searchParams.set("callbackURL", callbackURL);
+						}
+
+						return targetUrl.toString();
+					} catch {
+						return verificationUrl;
+					}
+				})();
+
+				return mailService.sendVerificationEmail({
 					to: user.email,
 					name: user.name,
-					url: verificationUrl,
-				}),
+					url: frontendVerificationUrl,
+				});
+			},
 		},
 		emailAndPassword: {
 			enabled: true,
+			requireEmailVerification: true,
 			sendResetPassword: ({ user, url: resetPasswordUrl }) =>
 				mailService.sendResetPasswordEmail({
 					to: user.email,

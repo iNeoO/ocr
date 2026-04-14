@@ -12,6 +12,7 @@ type ValidationStatus = "idle" | "loading" | "success" | "error";
 
 const validateEmailSearchParamsSchema = z.object({
 	token: z.string(),
+	callbackURL: z.string().optional(),
 });
 
 export const Route = createFileRoute("/validate-email")({
@@ -20,7 +21,7 @@ export const Route = createFileRoute("/validate-email")({
 });
 
 function RouteComponent() {
-	const { token } = Route.useSearch();
+	const { token, callbackURL } = Route.useSearch();
 	const validateEmail = useServerFn(verifyEmail);
 	const [status, setStatus] = useState<ValidationStatus>("idle");
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -35,7 +36,7 @@ function RouteComponent() {
 		setStatus("loading");
 		setErrorMessage(null);
 
-		validateEmail({ data: { token } })
+		validateEmail({ data: { token, callbackURL } })
 			.then(() => {
 				setStatus("success");
 			})
@@ -80,9 +81,15 @@ function RouteComponent() {
 					</Callout.Icon>
 					<Callout.Text>
 						Your email has been validated.{" "}
-						<Link asChild underline="hover" weight="medium" color="green">
-							<RouterLink to="/login">Go to login</RouterLink>
-						</Link>
+						{callbackURL ? (
+							<Link asChild underline="hover" weight="medium" color="green">
+								<a href={callbackURL}>Continue</a>
+							</Link>
+						) : (
+							<Link asChild underline="hover" weight="medium" color="green">
+								<RouterLink to="/login">Go to login</RouterLink>
+							</Link>
+						)}
 					</Callout.Text>
 				</Callout.Root>
 			) : null}

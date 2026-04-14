@@ -3,6 +3,8 @@ type VerificationEmailTemplateInput = {
 	url: string;
 };
 
+import { getEmailShellTemplate } from "./email-shell.template.js";
+
 export const getVerificationEmailTemplate = ({
 	name,
 	url,
@@ -11,17 +13,16 @@ export const getVerificationEmailTemplate = ({
 
 	return {
 		subject: "Confirmez votre adresse e-mail",
-		html: `
-			<div style="font-family: Arial, sans-serif; line-height: 1.5; color: #111827;">
-				<p>${greeting}</p>
-				<p>Confirmez votre adresse e-mail pour finaliser votre inscription.</p>
-				<p>
-					<a href="${url}" style="display: inline-block; padding: 12px 18px; background: #111827; color: #ffffff; text-decoration: none; border-radius: 6px;">
-						Confirmer mon adresse e-mail
-					</a>
-				</p>
-				<p>Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer cet e-mail.</p>
-			</div>
-		`,
+		html: getEmailShellTemplate({
+			title: "Confirmez votre adresse e-mail",
+			eyebrow: "Validation",
+			intro:
+				"Confirmez votre adresse e-mail pour finaliser votre inscription et accéder au cockpit OCR.",
+			buttonLabel: "Confirmer mon adresse e-mail",
+			buttonUrl: url,
+			notice:
+				"Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer cet e-mail sans autre action.",
+			greeting,
+		}),
 	};
 };
