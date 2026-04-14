@@ -13,6 +13,7 @@ import { Route as ValidateEmailRouteImport } from './routes/validate-email'
 import { Route as SignUpRouteImport } from './routes/sign-up'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as PasswordForgottenRouteImport } from './routes/password-forgotten'
+import { Route as MetricsRouteImport } from './routes/metrics'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as CguRouteImport } from './routes/cgu'
 import { Route as AuthRouteRouteImport } from './routes/_auth/route'
@@ -38,6 +39,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
 const PasswordForgottenRoute = PasswordForgottenRouteImport.update({
   id: '/password-forgotten',
   path: '/password-forgotten',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MetricsRoute = MetricsRouteImport.update({
+  id: '/metrics',
+  path: '/metrics',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -74,6 +80,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/cgu': typeof CguRoute
   '/login': typeof LoginRoute
+  '/metrics': typeof MetricsRoute
   '/password-forgotten': typeof PasswordForgottenRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sign-up': typeof SignUpRoute
@@ -85,6 +92,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/cgu': typeof CguRoute
   '/login': typeof LoginRoute
+  '/metrics': typeof MetricsRoute
   '/password-forgotten': typeof PasswordForgottenRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sign-up': typeof SignUpRoute
@@ -98,6 +106,7 @@ export interface FileRoutesById {
   '/_auth': typeof AuthRouteRouteWithChildren
   '/cgu': typeof CguRoute
   '/login': typeof LoginRoute
+  '/metrics': typeof MetricsRoute
   '/password-forgotten': typeof PasswordForgottenRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sign-up': typeof SignUpRoute
@@ -111,6 +120,7 @@ export interface FileRouteTypes {
     | '/'
     | '/cgu'
     | '/login'
+    | '/metrics'
     | '/password-forgotten'
     | '/reset-password'
     | '/sign-up'
@@ -122,6 +132,7 @@ export interface FileRouteTypes {
     | '/'
     | '/cgu'
     | '/login'
+    | '/metrics'
     | '/password-forgotten'
     | '/reset-password'
     | '/sign-up'
@@ -134,6 +145,7 @@ export interface FileRouteTypes {
     | '/_auth'
     | '/cgu'
     | '/login'
+    | '/metrics'
     | '/password-forgotten'
     | '/reset-password'
     | '/sign-up'
@@ -147,6 +159,7 @@ export interface RootRouteChildren {
   AuthRouteRoute: typeof AuthRouteRouteWithChildren
   CguRoute: typeof CguRoute
   LoginRoute: typeof LoginRoute
+  MetricsRoute: typeof MetricsRoute
   PasswordForgottenRoute: typeof PasswordForgottenRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignUpRoute: typeof SignUpRoute
@@ -182,6 +195,13 @@ declare module '@tanstack/react-router' {
       path: '/password-forgotten'
       fullPath: '/password-forgotten'
       preLoaderRoute: typeof PasswordForgottenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/metrics': {
+      id: '/metrics'
+      path: '/metrics'
+      fullPath: '/metrics'
+      preLoaderRoute: typeof MetricsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -246,6 +266,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRouteRoute: AuthRouteRouteWithChildren,
   CguRoute: CguRoute,
   LoginRoute: LoginRoute,
+  MetricsRoute: MetricsRoute,
   PasswordForgottenRoute: PasswordForgottenRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SignUpRoute: SignUpRoute,

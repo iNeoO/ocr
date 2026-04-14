@@ -1,11 +1,12 @@
 import { Theme } from "@radix-ui/themes";
 import {
 	createRootRouteWithContext,
+	type ErrorComponentProps,
 	HeadContent,
 	Link,
 	Scripts,
 } from "@tanstack/react-router";
-import type { CSSProperties } from "react";
+import { useEffect, type CSSProperties } from "react";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
 import { ToastProvider } from "../components/toast/ToastProvider";
@@ -52,6 +53,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 		],
 	}),
 	shellComponent: RootDocument,
+	errorComponent: RootErrorBoundary,
 	notFoundComponent: NotFoundPage,
 });
 
@@ -107,6 +109,48 @@ function NotFoundPage() {
 				>
 					Go back home
 				</Link>
+			</div>
+		</main>
+	);
+}
+
+function RootErrorBoundary({ error, reset }: ErrorComponentProps) {
+	useEffect(() => {
+		console.error("[CLIENT ERROR]:", error);
+	}, [error]);
+
+	const message =
+		error instanceof Error
+			? error.message
+			: "An unexpected error occurred. Please try again.";
+
+	return (
+		<main className="page-wrap px-4 py-14 sm:py-20">
+			<div className="hero-panel grid-noise rounded-[28px] px-6 py-10 sm:px-10 sm:py-14">
+				<p className="section-kicker mb-3 stagger-enter">Error</p>
+				<h1
+					className="display-title glow-line m-0 text-4xl sm:text-5xl stagger-enter"
+					style={{ "--stagger-delay": "80ms" } as CSSProperties}
+				>
+					Something went wrong
+				</h1>
+				<p
+					className="mt-4 max-w-[56ch] text-(--text-muted) stagger-enter"
+					style={{ "--stagger-delay": "140ms" } as CSSProperties}
+				>
+					{message}
+				</p>
+				<div
+					className="mt-8 flex flex-wrap gap-3 stagger-enter"
+					style={{ "--stagger-delay": "200ms" } as CSSProperties}
+				>
+					<button type="button" onClick={reset} className="terminal-button">
+						Try again
+					</button>
+					<Link to="/" className="subtle-button">
+						Go home
+					</Link>
+				</div>
 			</div>
 		</main>
 	);

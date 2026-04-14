@@ -121,15 +121,34 @@ services:
         condition: service_started
       db-migrate:
         condition: service_completed_successfully
+  
+  frontend:
+    <<: *app-env
+    container_name: ocr-frontend-prod
+    build:
+      context: .
+      dockerfile: ./apps/frontend/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3010:3010"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      minio:
+        condition: service_started
+      db-migrate:
+        condition: service_completed_successfully
 
   split-pdf-worker:
     <<: *app-env
     container_name: ocr-split-pdf-worker-prod
     build:
       context: .
-      dockerfile: ./workers/Dockerfile
-      args:
-        WORKER_NAME: split-pdf-worker
+      dockerfile: ./workers/split-pdf-worker/Dockerfile
     restart: unless-stopped
     depends_on:
       postgres:
@@ -150,9 +169,7 @@ services:
     container_name: ocr-transcribe-jpg-worker-prod
     build:
       context: .
-      dockerfile: ./workers/Dockerfile
-      args:
-        WORKER_NAME: transcribe-jpg-worker
+      dockerfile: ./workers/transcribe-jpg-worker/Dockerfile
     restart: unless-stopped
     depends_on:
       postgres:
@@ -173,9 +190,7 @@ services:
     container_name: ocr-post-process-page-worker-prod
     build:
       context: .
-      dockerfile: ./workers/Dockerfile
-      args:
-        WORKER_NAME: post-process-page-worker
+      dockerfile: ./workers/post-process-page-worker/Dockerfile
     restart: unless-stopped
     depends_on:
       postgres:
@@ -196,9 +211,7 @@ services:
     container_name: ocr-cleanup-process-worker-prod
     build:
       context: .
-      dockerfile: ./workers/Dockerfile
-      args:
-        WORKER_NAME: cleanup-process-worker
+      dockerfile: ./workers/cleanup-process-worker/Dockerfile
     restart: unless-stopped
     depends_on:
       postgres:

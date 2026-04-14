@@ -1,9 +1,14 @@
 import { createServerFn } from "@tanstack/react-start";
+import { withServerErrorLogging } from "../server/error-handling";
 import { trpc } from "../trpc.server";
 
 export const getProcessesByUserId = createServerFn({ method: "GET" }).handler(
 	async () => {
-		const { processes } = await trpc.processes.getProcesses.query();
+		const { processes } = await withServerErrorLogging(
+			"processes.getProcesses",
+			() => trpc.processes.getProcesses.query(),
+			{ userMessage: "Failed to load processes. Please try again." },
+		);
 		return processes;
 	},
 );
@@ -11,7 +16,11 @@ export const getProcessesByUserId = createServerFn({ method: "GET" }).handler(
 export const deleteProcess = createServerFn({ method: "POST" })
 	.inputValidator((data: { processId: string }) => data)
 	.handler(async ({ data }) => {
-		await trpc.processes.delete.mutate({ processId: data.processId });
+		await withServerErrorLogging(
+			"processes.delete",
+			() => trpc.processes.delete.mutate({ processId: data.processId }),
+			{ userMessage: "Failed to delete process. Please try again." },
+		);
 		return { success: true };
 	});
 

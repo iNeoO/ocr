@@ -2,12 +2,10 @@ ARG NODE_VERSION=24-alpine
 FROM node:${NODE_VERSION} AS base
 
 ARG PNPM_VERSION=10.33.0
-ARG WORKER_NAME=split-pdf-worker
 
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 ENV NODE_ENV=production
-ENV WORKER_NAME=${WORKER_NAME}
 
 RUN npm install --global corepack@latest && \
     corepack enable && \
@@ -69,4 +67,4 @@ RUN chown -R node:node /app
 
 USER node
 
-CMD ["sh", "-lc", "pnpm --filter @ocr/${WORKER_NAME} start"]
+CMD ["pnpm", "--filter", "@ocr/cleanup-process-worker", "start"]
