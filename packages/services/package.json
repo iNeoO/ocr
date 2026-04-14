@@ -28,6 +28,18 @@
     ".": {
       "types": "./src/index.ts",
       "default": "./dist/index.js"
+    },
+    "./auth/auth.service": {
+      "types": "./src/auth/auth.service.ts",
+      "default": "./dist/auth/auth.service.js"
+    },
+    "./files/files.service": {
+      "types": "./src/files/files.service.ts",
+      "default": "./dist/files/files.service.js"
+    },
+    "./process/process.service": {
+      "types": "./src/process/process.service.ts",
+      "default": "./dist/process/process.service.js"
     }
   },
   "devDependencies": {

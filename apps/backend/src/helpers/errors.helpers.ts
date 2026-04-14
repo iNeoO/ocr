@@ -1,4 +1,4 @@
-import { isAPIError } from "@ocr/services";
+import { isAPIError } from "@ocr/common";
 import { TRPCError } from "@trpc/server";
 
 const statusCodeToTrpcCode = {

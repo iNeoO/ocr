@@ -1,5 +1,5 @@
+import { isAPIError } from "@ocr/common";
 import { pinoLogger } from "@ocr/infra";
-import { isAPIError } from "@ocr/services";
 import { createFileRoute } from "@tanstack/react-router";
 import { getSession } from "../../../libs/api/auth";
 import { downloadServices } from "../../../libs/server/download-services";
