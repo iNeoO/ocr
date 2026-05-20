@@ -240,7 +240,12 @@ function RouteComponent() {
 								) : null}
 							</Box>
 
-							<Button type="submit" size="3" disabled={isSubmitting} className="rounded-full">
+							<Button
+								type="submit"
+								size="3"
+								disabled={isSubmitting}
+								className="compact-auth-button rounded-full"
+							>
 								{isSubmitting ? "Signing in..." : "Sign in"}
 							</Button>
 						</Flex>

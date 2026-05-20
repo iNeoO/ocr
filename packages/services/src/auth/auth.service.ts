@@ -110,11 +110,10 @@ export class AuthService {
 		});
 	}
 
-	verifyEmail({ token, callbackURL }: VerifyEmailInput) {
+	verifyEmail({ token }: VerifyEmailInput) {
 		return this.auth.api.verifyEmail({
 			query: {
 				token,
-				callbackURL,
 			},
 		});
 	}

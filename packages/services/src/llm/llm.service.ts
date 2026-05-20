@@ -1,93 +1,42 @@
-import { env } from "@ocr/infra/configs";
 import { getLoggerStore } from "@ocr/infra/libs";
+import { chat, streamToText } from "@tanstack/ai";
+import { openaiText } from "@tanstack/ai-openai";
 import { POST_PROCESS_PROMPT } from "./llm.prompt.js";
-import type {
-	OllamaChatResponse,
-	RefinePageMarkdownInput,
-} from "./llm.type.js";
+import type { RefinePageMarkdownInput } from "./llm.type.js";
 
 export class LlmService {
 	async refinePageMarkdown({
 		imageBuffer,
 		currentMarkdown,
 	}: RefinePageMarkdownInput) {
-		const logger = getLoggerStore();
-		const response = await fetch(new URL("/api/chat", env.LLM_URL), {
-			method: "POST",
-			signal: AbortSignal.timeout(env.LLM_TIMEOUT_MS),
-			headers: {
-				"content-type": "application/json",
-			},
-			body: JSON.stringify({
-				model: env.LLM_MODEL,
-				stream: true,
-				messages: [
-					{
-						role: "user",
-						content: `${POST_PROCESS_PROMPT}${currentMarkdown}`,
-						images: [Buffer.from(imageBuffer).toString("base64")],
-					},
-				],
-			}),
+		const start = Date.now();
+		const stream = chat({
+			adapter: openaiText("gpt-4.1-mini"),
+			messages: [
+				{
+					role: "user",
+					content: [
+						{
+							type: "text",
+							content: `${POST_PROCESS_PROMPT}${currentMarkdown}`,
+						},
+						{
+							type: "image",
+							source: {
+								type: "data",
+								value: Buffer.from(imageBuffer).toString("base64"),
+								mimeType: "image/jpeg",
+							},
+						},
+					],
+				},
+			],
 		});
 
-		if (!response.ok) {
-			logger.error(
-				{ status: response.status, statusText: response.statusText },
-				"LLM request failed",
-			);
-			throw new Error(`LLM request failed with status ${response.status}`);
-		}
-
-		if (!response.body) {
-			throw new Error("LLM response body is empty");
-		}
-
-		const reader = response.body.getReader();
-		const decoder = new TextDecoder();
-		let buffered = "";
-		let refinedMarkdown = "";
-
-		while (true) {
-			const { value, done } = await reader.read();
-			if (done) {
-				break;
-			}
-
-			buffered += decoder.decode(value, { stream: true });
-			const lines = buffered.split("\n");
-			buffered = lines.pop() ?? "";
-
-			for (const line of lines) {
-				const trimmedLine = line.trim();
-				if (!trimmedLine) {
-					continue;
-				}
-
-				const payload = JSON.parse(trimmedLine) as OllamaChatResponse & {
-					done?: boolean;
-				};
-				if (payload.error) {
-					throw new Error(payload.error);
-				}
-
-				refinedMarkdown += payload.message?.content ?? "";
-			}
-		}
-
-		if (buffered.trim()) {
-			const payload = JSON.parse(buffered.trim()) as OllamaChatResponse;
-			if (payload.error) {
-				throw new Error(payload.error);
-			}
-			refinedMarkdown += payload.message?.content ?? "";
-		}
-
-		refinedMarkdown = refinedMarkdown.trim();
-		if (!refinedMarkdown) {
-			throw new Error("LLM returned empty markdown content");
-		}
-
-		return refinedMarkdown;
+		const text = await streamToText(stream);
+		const duration = Date.now() - start;
+		const logger = getLoggerStore();
+		logger.info({ duration }, "Page markdown refined");
+		return text;
 	}
 }

@@ -1,12 +1,14 @@
 export const POST_PROCESS_PROMPT = `
-You improve OCR markdown formatting for a document page.
+You are correcting and formatting OCR output for a scanned document page.
+You receive both the raw OCR text and the original image. The image is the authoritative source — use it to fix OCR errors.
 
 Rules:
-- Keep the original meaning and wording from the OCR text whenever possible.
-- Improve only structure and layout in markdown.
-- Do not invent information that is not present in the image or OCR text.
-- Preserve lists, headings, tables, and reading order when they are visible.
+- Correct OCR misreadings using the image: fix misspelled proper nouns (author names, titles, places), garbled words, and broken characters.
+- For well-known references (book titles, famous authors, historical figures), apply your knowledge to confirm or correct what you see in the image.
+- Preserve the original meaning, structure, and reading order exactly as they appear in the image.
+- Improve markdown structure: headings, lists, tables, emphasis, paragraph breaks.
+- Do not add, remove, or invent content that is not visible in the image.
 - Return markdown only, with no code fences and no explanation.
 
-OCR markdown:
+OCR markdown (use as a starting point, not as ground truth):
 `;

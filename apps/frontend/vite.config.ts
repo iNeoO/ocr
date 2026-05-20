@@ -37,7 +37,7 @@ const config = defineConfig(({ mode }) => {
 		server: {
 			proxy: {
 				"/trpc": {
-					target: "http://localhost:4000",
+					target: "http://localhost:4010",
 					changeOrigin: true,
 					rewrite: (path) => path.replace(/^\/trpc/, ""),
 				},

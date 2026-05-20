@@ -311,16 +311,22 @@ pre code {
   align-items: center;
   justify-content: center;
   gap: 0.65rem;
-  min-height: 2.9rem;
-  padding: 0.8rem 1.2rem;
+  flex: 0 0 auto;
+  align-self: flex-start;
+  height: 2.35rem;
+  min-height: 2.35rem;
+  max-height: 2.35rem;
+  padding: 0 1rem;
   border-radius: 999px;
   border: 1px solid var(--line);
   font-family: var(--font-mono);
-  font-size: 0.76rem;
+  font-size: 0.72rem;
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   text-decoration: none;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .terminal-button {
@@ -341,6 +347,13 @@ pre code {
 
 .subtle-button:hover {
   border-color: var(--line-strong);
+}
+
+.compact-auth-button {
+  height: 2.35rem;
+  min-height: 2.35rem;
+  max-height: 2.35rem;
+  line-height: 1;
 }
 
 .nav-link {
