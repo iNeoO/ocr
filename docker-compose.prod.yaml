@@ -9,7 +9,7 @@ x-app-env: &app-env
     PG_URL: postgresql://${PG_OCR_USER}:${PG_OCR_PASSWORD}@postgres:5432/${PG_OCR_DB}
     REDIS_OCR_HOST: redis
     REDIS_OCR_PORT: 6379
-    AMQP_URL: amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:5672
+    AMQP_URL: ${AMQP_URL}
     MINIO_ENDPOINT: http://minio:9000
   networks:
     - ocr-network
@@ -50,7 +50,7 @@ services:
       timeout: 5s
       retries: 10
     ports:
-      - "127.0.0.1:${REDIS_OCR_HOST_PORT}:6379"
+      - "127.0.0.1:${REDIS_OCR_PORT}:6379"
     networks:
       - ocr-network
 
@@ -58,9 +58,6 @@ services:
     image: rabbitmq:4-management-alpine
     container_name: ocr-rabbitmq-prod
     restart: unless-stopped
-    environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
       interval: 10s
@@ -68,8 +65,8 @@ services:
       retries: 10
     ports:
       - "127.0.0.1:${AMQP_HOST_PORT}:5672"
-      - "127.0.0.1:${RABBITMQ_MANAGEMENT_HOST_PORT}:15672"
-      - "127.0.0.1:${RABBITMQ_PROMETHEUS_HOST_PORT}:15692"
+      - "127.0.0.1:15673:15672"
+      - "127.0.0.1:15693:15692"
     networks:
       - ocr-network
 
@@ -82,8 +79,8 @@ services:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
     ports:
-      - "127.0.0.1:${MINIO_API_HOST_PORT}:9000"
-      - "127.0.0.1:${MINIO_CONSOLE_HOST_PORT}:9001"
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
     volumes:
       - minio-data:/data
     networks:
