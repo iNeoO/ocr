@@ -69,6 +69,7 @@ services:
       - "127.0.0.1:15693:15692"
     networks:
       - ocr-network
+      - monitoring-shared
 
   minio:
     image: minio/minio:latest
@@ -118,6 +119,9 @@ services:
         condition: service_started
       db-migrate:
         condition: service_completed_successfully
+    networks:
+      - ocr-network
+      - monitoring-shared
   
   frontend:
     <<: *app-env
@@ -139,6 +143,9 @@ services:
         condition: service_started
       db-migrate:
         condition: service_completed_successfully
+    networks:
+      - ocr-network
+      - monitoring-shared
 
   split-pdf-worker:
     <<: *app-env
@@ -230,3 +237,6 @@ networks:
   ocr-network:
     name: ocr-network-prod
     driver: bridge
+  monitoring-shared:
+    name: ${MONITORING_SHARED_NETWORK:-monitoring-shared}
+    external: true
