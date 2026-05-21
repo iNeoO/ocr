@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { parseContentDispositionFilename } from "../http/content-disposition";
 import { withServerErrorLogging } from "../server/error-handling";
 import { trpc } from "../trpc.server";
 
@@ -67,9 +68,10 @@ export const downloadProcessArchive = async (processId: string) => {
 	}
 
 	const blob = await response.blob();
-	const disposition = response.headers.get("content-disposition");
-	const filenameMatch = disposition?.match(/filename="([^"]+)"/);
-	const filename = filenameMatch?.[1] ?? `process-${processId}.zip`;
+	const filename =
+		parseContentDispositionFilename(
+			response.headers.get("content-disposition"),
+		) ?? `process-${processId}.zip`;
 
 	return {
 		blob,

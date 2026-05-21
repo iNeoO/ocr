@@ -2,6 +2,7 @@ import { isAPIError } from "@ocr/common";
 import { pinoLogger } from "@ocr/infra";
 import { createFileRoute } from "@tanstack/react-router";
 import { getSession } from "../../../libs/api/auth";
+import { buildContentDispositionAttachment } from "../../../libs/http/content-disposition";
 import { downloadServices } from "../../../libs/server/download-services";
 
 export const Route = createFileRoute("/downloads/processes/$id")({
@@ -42,7 +43,9 @@ export const Route = createFileRoute("/downloads/processes/$id")({
 						status: 200,
 						headers: {
 							"Content-Type": "application/zip",
-							"Content-Disposition": `attachment; filename="${archive.filename}"`,
+							"Content-Disposition": buildContentDispositionAttachment(
+								archive.filename,
+							),
 							"Content-Length": String(archive.buffer.length),
 							"Cache-Control": "no-store",
 						},
