@@ -11,6 +11,7 @@ x-app-env: &app-env
     REDIS_OCR_PORT: 6379
     AMQP_URL: ${AMQP_URL}
     MINIO_ENDPOINT: http://minio:9000
+    FRONTEND_ALLOWED_HOSTS: ${FRONTEND_ALLOWED_HOSTS:-ocr-frontend-prod}
   networks:
     - ocr-network
 

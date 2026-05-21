@@ -47,14 +47,12 @@ RUN pnpm build:runtime && \
 
 FROM base AS server
 
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/package.json ./package.json
-COPY --from=deps /app/pnpm-lock.yaml ./pnpm-lock.yaml
-COPY --from=deps /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
+COPY --chown=node:node --from=deps /app/node_modules ./node_modules
+COPY --chown=node:node --from=deps /app/package.json ./package.json
+COPY --chown=node:node --from=deps /app/pnpm-lock.yaml ./pnpm-lock.yaml
+COPY --chown=node:node --from=deps /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
 
-COPY --from=builder /app/apps/frontend apps/frontend
-
-RUN chown -R node:node /app
+COPY --chown=node:node --from=builder /app/apps/frontend apps/frontend
 
 USER node
 

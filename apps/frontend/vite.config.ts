@@ -11,16 +11,14 @@ const getAllowedHosts = (
 ) => {
 	const allowedHosts = ["localhost", "127.0.0.1"];
 
-	if (!betterAuthUrl) {
-		return allowedHosts;
-	}
-
-	try {
-		allowedHosts.push(new URL(betterAuthUrl).hostname);
-	} catch {
-		console.warn(
-			`Ignoring invalid BETTER_AUTH_URL for Vite preview.allowedHosts: ${betterAuthUrl}`,
-		);
+	if (betterAuthUrl) {
+		try {
+			allowedHosts.push(new URL(betterAuthUrl).hostname);
+		} catch {
+			console.warn(
+				`Ignoring invalid BETTER_AUTH_URL for Vite preview.allowedHosts: ${betterAuthUrl}`,
+			);
+		}
 	}
 
 	if (extraAllowedHosts) {
@@ -28,6 +26,13 @@ const getAllowedHosts = (
 			...extraAllowedHosts
 				.split(",")
 				.map((host) => host.trim())
+				.map((host) => {
+					try {
+						return new URL(host).hostname;
+					} catch {
+						return host;
+					}
+				})
 				.filter(Boolean),
 		);
 	}
