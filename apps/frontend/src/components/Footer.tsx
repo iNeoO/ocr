@@ -15,10 +15,10 @@ export default function Footer() {
 				<div className="flex flex-col gap-4 text-sm text-(--text-muted)">
 					<div className="flex flex-wrap items-center gap-x-4 gap-y-2">
 						<Link
-							to="/cgu"
+							to="/terms-and-conditions"
 							className="transition-colors hover:text-(--text-strong)"
 						>
-							CGU
+							Terms & Conditions
 						</Link>
 						<span className="hidden text-(--border-strong) md:inline">•</span>
 						<a

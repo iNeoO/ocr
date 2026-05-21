@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/cgu")({
+export const Route = createFileRoute("/terms-and-conditions")({
 	component: RouteComponent,
 });
 

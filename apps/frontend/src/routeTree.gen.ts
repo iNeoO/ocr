@@ -15,7 +15,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as PasswordForgottenRouteImport } from './routes/password-forgotten'
 import { Route as MetricsRouteImport } from './routes/metrics'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as CguRouteImport } from './routes/cgu'
+import { Route as TermsAndConditionsRouteImport } from './routes/terms-and-conditions'
 import { Route as AuthRouteRouteImport } from './routes/_auth/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthProcessesRouteImport } from './routes/_auth/processes'
@@ -51,9 +51,9 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CguRoute = CguRouteImport.update({
-  id: '/cgu',
-  path: '/cgu',
+const TermsAndConditionsRoute = TermsAndConditionsRouteImport.update({
+  id: '/terms-and-conditions',
+  path: '/terms-and-conditions',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRouteRoute = AuthRouteRouteImport.update({
@@ -78,7 +78,7 @@ const DownloadsProcessesIdRoute = DownloadsProcessesIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/cgu': typeof CguRoute
+  '/terms-and-conditions': typeof TermsAndConditionsRoute
   '/login': typeof LoginRoute
   '/metrics': typeof MetricsRoute
   '/password-forgotten': typeof PasswordForgottenRoute
@@ -90,7 +90,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/cgu': typeof CguRoute
+  '/terms-and-conditions': typeof TermsAndConditionsRoute
   '/login': typeof LoginRoute
   '/metrics': typeof MetricsRoute
   '/password-forgotten': typeof PasswordForgottenRoute
@@ -104,7 +104,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_auth': typeof AuthRouteRouteWithChildren
-  '/cgu': typeof CguRoute
+  '/terms-and-conditions': typeof TermsAndConditionsRoute
   '/login': typeof LoginRoute
   '/metrics': typeof MetricsRoute
   '/password-forgotten': typeof PasswordForgottenRoute
@@ -118,7 +118,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/cgu'
+    | '/terms-and-conditions'
     | '/login'
     | '/metrics'
     | '/password-forgotten'
@@ -130,7 +130,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/cgu'
+    | '/terms-and-conditions'
     | '/login'
     | '/metrics'
     | '/password-forgotten'
@@ -143,7 +143,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_auth'
-    | '/cgu'
+    | '/terms-and-conditions'
     | '/login'
     | '/metrics'
     | '/password-forgotten'
@@ -157,7 +157,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRouteRoute: typeof AuthRouteRouteWithChildren
-  CguRoute: typeof CguRoute
+  TermsAndConditionsRoute: typeof TermsAndConditionsRoute
   LoginRoute: typeof LoginRoute
   MetricsRoute: typeof MetricsRoute
   PasswordForgottenRoute: typeof PasswordForgottenRoute
@@ -211,11 +211,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/cgu': {
-      id: '/cgu'
-      path: '/cgu'
-      fullPath: '/cgu'
-      preLoaderRoute: typeof CguRouteImport
+    '/terms-and-conditions': {
+      id: '/terms-and-conditions'
+      path: '/terms-and-conditions'
+      fullPath: '/terms-and-conditions'
+      preLoaderRoute: typeof TermsAndConditionsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_auth': {
@@ -264,7 +264,7 @@ const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRouteRoute: AuthRouteRouteWithChildren,
-  CguRoute: CguRoute,
+  TermsAndConditionsRoute: TermsAndConditionsRoute,
   LoginRoute: LoginRoute,
   MetricsRoute: MetricsRoute,
   PasswordForgottenRoute: PasswordForgottenRoute,
