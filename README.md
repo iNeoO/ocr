@@ -56,6 +56,8 @@ Prepare environment variables from one of the provided templates:
 - [`.env.exemple`](./.env.exemple) for local development
 - [`.env.docker.example`](./.env.docker.example) for Docker-based runs
 
+`FRONTEND_ALLOWED_HOSTS` can be used to add extra hostnames accepted by `vite preview` in the frontend container. Use a comma-separated list when internal probes or reverse proxies access the frontend with hostnames that differ from `localhost` or `BETTER_AUTH_URL`.
+
 Start local infrastructure:
 
 ```bash
@@ -110,6 +112,7 @@ Current deployment note: the production compose file does not include the fronte
 - Project notes: [`doc/rfc.md`](./doc/rfc.md)
 
 The backend metrics endpoint is exposed on `/metrics`.
+The frontend also exposes `/metrics`; if it is served through `vite preview`, make sure the probe hostname is allowed through `FRONTEND_ALLOWED_HOSTS` when needed.
 
 ## License
 

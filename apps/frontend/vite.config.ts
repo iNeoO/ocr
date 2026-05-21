@@ -5,7 +5,10 @@ import viteReact from "@vitejs/plugin-react";
 import { defineConfig, loadEnv } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
-const getAllowedHosts = (betterAuthUrl?: string) => {
+const getAllowedHosts = (
+	betterAuthUrl?: string,
+	extraAllowedHosts?: string,
+) => {
 	const allowedHosts = ["localhost", "127.0.0.1"];
 
 	if (!betterAuthUrl) {
@@ -17,6 +20,15 @@ const getAllowedHosts = (betterAuthUrl?: string) => {
 	} catch {
 		console.warn(
 			`Ignoring invalid BETTER_AUTH_URL for Vite preview.allowedHosts: ${betterAuthUrl}`,
+		);
+	}
+
+	if (extraAllowedHosts) {
+		allowedHosts.push(
+			...extraAllowedHosts
+				.split(",")
+				.map((host) => host.trim())
+				.filter(Boolean),
 		);
 	}
 
@@ -46,7 +58,10 @@ const config = defineConfig(({ mode }) => {
 		preview: {
 			host: "0.0.0.0",
 			port: 3010,
-			allowedHosts: getAllowedHosts(env.BETTER_AUTH_URL),
+			allowedHosts: getAllowedHosts(
+				env.BETTER_AUTH_URL,
+				env.FRONTEND_ALLOWED_HOSTS,
+			),
 		},
 	};
 });
