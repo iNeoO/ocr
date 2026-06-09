@@ -88,7 +88,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 function NotFoundPage() {
 	return (
 		<main className="page-wrap px-4 py-14 sm:py-20">
-			<div className="hero-panel grid-noise rounded-[28px] px-6 py-10 sm:px-10 sm:py-14">
+			<div className="hero-panel grid-noise  px-6 py-10 sm:px-10 sm:py-14">
 				<p className="section-kicker mb-3 stagger-enter">404</p>
 				<h1
 					className="display-title glow-line m-0 text-4xl sm:text-5xl stagger-enter"
@@ -126,7 +126,7 @@ function RootErrorBoundary({ error, reset }: ErrorComponentProps) {
 
 	return (
 		<main className="page-wrap px-4 py-14 sm:py-20">
-			<div className="hero-panel grid-noise rounded-[28px] px-6 py-10 sm:px-10 sm:py-14">
+			<div className="hero-panel grid-noise  px-6 py-10 sm:px-10 sm:py-14">
 				<p className="section-kicker mb-3 stagger-enter">Error</p>
 				<h1
 					className="display-title glow-line m-0 text-4xl sm:text-5xl stagger-enter"

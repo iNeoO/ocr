@@ -149,7 +149,7 @@ function RouteComponent() {
 										mt="2"
 										size="3"
 										type="password"
-										className="rounded-[18px]"
+										className="input-field"
 										value={password}
 										onChange={(event) => setPassword(event.target.value)}
 										required
@@ -179,7 +179,7 @@ function RouteComponent() {
 										mt="2"
 										size="3"
 										type="password"
-										className="rounded-[18px]"
+										className="input-field"
 										value={confirmPassword}
 										onChange={(event) => setConfirmPassword(event.target.value)}
 										required

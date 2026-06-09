@@ -107,7 +107,7 @@ function RouteComponent() {
 										mt="2"
 										size="3"
 										type="email"
-										className="rounded-[18px]"
+										className="input-field"
 										value={email}
 										onChange={(e) => setEmail(e.target.value)}
 										required

@@ -43,12 +43,7 @@ export function UploadProcessDialog({
 	onUpload,
 }: UploadProcessDialogProps) {
 	return (
-			<Dialog.Root open={isOpen} onOpenChange={onOpenChange}>
-			<Dialog.Trigger>
-				<Button color="orange" className="rounded-full">
-					Upload file
-				</Button>
-			</Dialog.Trigger>
+		<Dialog.Root open={isOpen} onOpenChange={onOpenChange}>
 			<Dialog.Content maxWidth="640px" className="upload-dialog-content">
 				<Dialog.Title className="display-title">Upload a PDF</Dialog.Title>
 				<Dialog.Description size="2" mb="5" className="text-(--text-muted)">
@@ -67,7 +62,7 @@ export function UploadProcessDialog({
 						className={`upload-dropzone ${isDragging ? "is-dragging" : ""}`}
 					>
 						<label
-							className="flex min-h-[20rem] cursor-pointer items-center justify-center rounded-[22px] px-5 py-6"
+							className="flex min-h-[20rem] cursor-pointer items-center justify-center px-5 py-6"
 							onDrop={onDrop}
 							onDragOver={onDragOver}
 							onDragLeave={onDragLeave}

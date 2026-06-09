@@ -7,7 +7,7 @@ export const Route = createFileRoute("/terms-and-conditions")({
 function RouteComponent() {
 	return (
 		<main className="page-wrap px-4 py-12 sm:py-16">
-			<div className="hero-panel grid-noise rounded-4xl px-6 py-8 sm:px-10 sm:py-12">
+			<div className="hero-panel grid-noise px-6 py-8 sm:px-10 sm:py-12">
 				<div className="flex flex-col gap-4 border-b border-(--border-strong) pb-8">
 					<p className="section-kicker m-0">OCR</p>
 					<h1 className="display-title m-0 max-w-[14ch] text-4xl text-(--text-strong) sm:text-5xl">

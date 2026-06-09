@@ -30,7 +30,7 @@ export function ProcessesTable({
 }: ProcessesTableProps) {
 	if (processes.length === 0) {
 		return (
-			<div className="empty-state-panel feature-card rounded-[24px]">
+			<div className="empty-state-panel feature-card ">
 				<p className="section-kicker m-0">Empty queue</p>
 				<Text size="4" className="mt-3 block text-(--text-strong)">
 					No process found.
@@ -50,7 +50,7 @@ export function ProcessesTable({
 				</p>
 			</div>
 			<div className="process-table-wrap">
-				<Table.Root variant="surface" size="2" className="process-table">
+				<Table.Root variant="ghost" size="2" className="process-table">
 					<Table.Header>
 						<Table.Row>
 							<Table.ColumnHeaderCell>Created at</Table.ColumnHeaderCell>

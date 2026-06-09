@@ -197,7 +197,7 @@ function RouteComponent() {
 									mt="2"
 									size="3"
 									type="email"
-									className="rounded-[18px]"
+									className="input-field"
 									value={loginEmail}
 									onChange={(e) => setLoginEmail(e.target.value)}
 									placeholder="you@example.com"
@@ -223,7 +223,7 @@ function RouteComponent() {
 									mt="2"
 									size="3"
 									type="password"
-									className="rounded-[18px]"
+									className="input-field"
 									value={loginPassword}
 									onChange={(e) => setLoginPassword(e.target.value)}
 									placeholder="Enter your password"

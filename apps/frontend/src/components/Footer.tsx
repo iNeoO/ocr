@@ -5,7 +5,7 @@ export default function Footer() {
 
 	return (
 		<footer className="px-4 pb-10 pt-16">
-			<div className="page-wrap data-panel grid gap-6 rounded-[28px] px-5 py-6 sm:px-6">
+			<div className="page-wrap data-panel grid gap-6  px-5 py-6 sm:px-6">
 				<div>
 					<p className="section-kicker m-0">Optical control room</p>
 					<p className="display-title mt-2 text-2xl text-(--text-strong)">

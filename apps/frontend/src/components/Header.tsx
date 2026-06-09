@@ -7,7 +7,7 @@ export default function Header() {
 
 	return (
 		<header className="sticky top-0 z-50 px-3 pt-3 sm:px-4">
-			<nav className="page-wrap data-panel flex flex-wrap items-center gap-x-4 gap-y-3 rounded-[24px] px-4 py-3 sm:px-5">
+			<nav className="page-wrap data-panel flex flex-wrap items-center gap-x-4 gap-y-3 px-4 py-3 sm:px-5">
 				<h2 className="m-0 shrink-0 text-base font-semibold tracking-tight">
 					<Link
 						to="/"
@@ -58,8 +58,8 @@ export default function Header() {
 				</div>
 
 				<div className="ml-auto flex items-center gap-2">
-					<div className="hidden rounded-full border border-(--line) px-3 py-2 sm:flex">
-						<span className="nav-label text-[0.66rem] text-(--text-faint)">
+					<div className="flex rounded-full border border-(--line) px-2 py-1.5 sm:px-3 sm:py-2">
+						<span className="nav-label text-[0.62rem] text-(--text-faint) sm:text-[0.66rem]">
 							live workspace
 						</span>
 					</div>

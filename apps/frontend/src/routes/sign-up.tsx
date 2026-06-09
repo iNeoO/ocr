@@ -109,7 +109,7 @@ function RouteComponent() {
 									mt="2"
 									size="3"
 									type="text"
-									className="rounded-[18px]"
+									className="input-field"
 									value={signupName}
 									onChange={(e) => setSignupName(e.target.value)}
 									required
@@ -134,7 +134,7 @@ function RouteComponent() {
 									mt="2"
 									size="3"
 									type="email"
-									className="rounded-[18px]"
+									className="input-field"
 									value={signupEmail}
 									onChange={(e) => setSignupEmail(e.target.value)}
 									required
@@ -159,7 +159,7 @@ function RouteComponent() {
 									mt="2"
 									size="3"
 									type="password"
-									className="rounded-[18px]"
+									className="input-field"
 									value={signupPassword}
 									onChange={(e) => setSignupPassword(e.target.value)}
 									required
