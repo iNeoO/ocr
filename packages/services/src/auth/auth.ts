@@ -30,7 +30,10 @@ export const createAuth = ({
 				const frontendVerificationUrl = (() => {
 					try {
 						const sourceUrl = new URL(verificationUrl);
-						const targetUrl = new URL("/validate-email", url ?? verificationUrl);
+						const targetUrl = new URL(
+							"/validate-email",
+							url ?? verificationUrl,
+						);
 						targetUrl.searchParams.set(
 							"token",
 							token ?? sourceUrl.searchParams.get("token") ?? "",
