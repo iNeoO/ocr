@@ -131,7 +131,7 @@ async function main() {
 
 	if (failedFiles.length > 0) {
 		console.error(
-			"Some file objects could not be deleted from S3/MinIO. Their DB rows were kept.",
+			"Some file objects could not be deleted from S3/Garage. Their DB rows were kept.",
 		);
 		for (const failedFile of failedFiles) {
 			console.error(

@@ -31,7 +31,7 @@ The repository is a `pnpm` monorepo split into a few clear areas:
 - Backend: Node.js, TypeScript, tRPC
 - Database: PostgreSQL with Drizzle ORM
 - Messaging and cache: RabbitMQ, Redis
-- Object storage: MinIO / S3-compatible storage
+- Object storage: Garage / S3-compatible storage
 - Tooling: `pnpm`, Biome, Docker Compose
 
 ## End-To-End Flow
@@ -64,6 +64,16 @@ Start local infrastructure:
 docker compose up -d
 ```
 
+Bootstrap the local Garage bucket after the first start, or after wiping the
+`garage-data` volume:
+
+```bash
+pnpm garage:init
+```
+
+This imports `S3_ACCESS_KEY` / `S3_SECRET_KEY`, creates `S3_BUCKET`, and grants
+read/write access to that key.
+
 Run the full app in development mode:
 
 ```bash
@@ -80,6 +90,7 @@ pnpm build
 pnpm lint
 pnpm db:generate
 pnpm db:migrate
+pnpm garage:init
 pnpm scripts:generate-openapi
 pnpm scripts:serve-openapi
 ```
@@ -100,9 +111,11 @@ Main exposed production ports:
 - PostgreSQL: `5436`
 - Redis: `6380`
 - RabbitMQ: `5673`
-- MinIO API: `9002`
 
-Current deployment note: the production compose file does not include the frontend service.
+Production object storage is provided by the shared Garage stack in
+[`../infra`](../infra). OCR containers join the external `garage-network` and
+reach Garage at `http://garage-prod:3900`; create the `ocr-prod` bucket and grant
+the production `S3_ACCESS_KEY` read/write access before deploying.
 
 ## Observability And Docs
 

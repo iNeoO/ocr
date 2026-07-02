@@ -27,6 +27,7 @@
     "scripts:clean-processes": "dotenv -e .env -- pnpm --filter @ocr/scripts clean-processes",
     "scripts:generate-openapi": "pnpm --filter @ocr/scripts generate-openapi",
     "scripts:serve-openapi": "pnpm --filter @ocr/scripts serve-openapi",
+    "garage:init": "dotenv -e .env -- bash garage-init-dev.sh",
     "lint": "pnpm -r run lint"
   },
   "keywords": [],

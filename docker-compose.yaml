@@ -26,19 +26,16 @@ services:
       - "127.0.0.1:15672:15672"
       - "127.0.0.1:15692:15692"
 
-  minio:
-    image: minio/minio:latest
-    container_name: ocr-minio-dev
-    command: server /data --console-address ":9001"
+  garage:
+    image: dxflrs/garage:v2.3.0
+    container_name: ocr-garage-dev
+    command: ["/garage", "server", "--single-node"]
     ports:
-      - "9000:9000"
-      - "9001:9001"
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      - "3900:3900"
     volumes:
-      - minio-data:/data
+      - garage-data:/data
+      - ./garage.toml:/etc/garage.toml:ro
 
 volumes:
   pgdata:
-  minio-data:
+  garage-data:
