@@ -11,7 +11,10 @@ import { createSplitWorker } from "./handler/split-pdf.handler.js";
 
 export const createContainer = () => {
 	const filesService = new FilesService(db);
-	const processStatusPubSubService = new ProcessStatusPubSubService(redis);
+	const processStatusPubSubService = new ProcessStatusPubSubService(
+		redis,
+		env.REDIS_KEY_PREFIX,
+	);
 	const transcribeJpgPublisher = new TranscribeJpgPublisher({
 		amqpUrl: env.AMQP_URL,
 		queue: env.AMQ_TRANSCRIBE_JPG_QUEUE,

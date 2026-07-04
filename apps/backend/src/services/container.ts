@@ -36,7 +36,10 @@ export const createServices = (): AppServices => {
 	const splitPdfPublisher: SplitPdfPublisher = new SplitPdfPublisher();
 	const llmService = new LlmService();
 	const postProcessPagePublisher = new PostProcessPagePublisher();
-	const processStatusPubSubService = new ProcessStatusPubSubService(redis);
+	const processStatusPubSubService = new ProcessStatusPubSubService(
+		redis,
+		env.REDIS_KEY_PREFIX,
+	);
 	const transcribeJpgPublisher: TranscribeJpgPublisher =
 		new TranscribeJpgPublisher({
 			amqpUrl: env.AMQP_URL,

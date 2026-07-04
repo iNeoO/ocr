@@ -1,6 +1,6 @@
+import { startResilientConsumer } from "@ocr/infra/amqp";
 import { env } from "@ocr/infra/configs";
 import { loggerStorage, pinoLogger } from "@ocr/infra/libs";
-import amqp from "amqplib";
 import {
 	type PostProcessPageJobData,
 	parseRawMessage,
@@ -11,46 +11,14 @@ type StartConsumerParams = {
 	shutdown: () => Promise<void>;
 };
 
-export const startConsumer = async ({
-	handler,
-	shutdown,
-}: StartConsumerParams) => {
-	const connection = await amqp.connect(env.AMQP_URL);
-	const channel = await connection.createChannel();
-
-	await channel.assertQueue(env.AMQ_POST_PROCESS_PAGE_QUEUE, { durable: true });
-	await channel.prefetch(env.AMQ_POST_PROCESS_PAGE_PREFETCH);
-
-	pinoLogger.info(
-		{
-			queue: env.AMQ_POST_PROCESS_PAGE_QUEUE,
-			prefetch: env.AMQ_POST_PROCESS_PAGE_PREFETCH,
-		},
-		"Post-process page worker is consuming",
-	);
-
-	const close = async (signal: string) => {
-		pinoLogger.info({ signal }, "Shutting down post-process page worker");
-		await channel.close();
-		await connection.close();
-		await shutdown();
-		process.exit(0);
-	};
-
-	process.on("SIGINT", () => {
-		close("SIGINT");
-	});
-	process.on("SIGTERM", () => {
-		close("SIGTERM");
-	});
-
-	await channel.consume(
-		env.AMQ_POST_PROCESS_PAGE_QUEUE,
-		async (rawMessage) => {
-			if (!rawMessage) {
-				return;
-			}
-
+export const startConsumer = ({ handler, shutdown }: StartConsumerParams) => {
+	startResilientConsumer({
+		amqpUrl: env.AMQP_URL,
+		queue: env.AMQ_POST_PROCESS_PAGE_QUEUE,
+		prefetch: env.AMQ_POST_PROCESS_PAGE_PREFETCH,
+		workerName: "post-process-page-worker",
+		shutdown,
+		onMessage: async (channel, rawMessage) => {
 			const messageLogger = pinoLogger.child({
 				worker: "post-process-page-worker",
 				queue: env.AMQ_POST_PROCESS_PAGE_QUEUE,
@@ -85,6 +53,5 @@ export const startConsumer = async ({
 				}
 			});
 		},
-		{ noAck: false },
-	);
+	});
 };

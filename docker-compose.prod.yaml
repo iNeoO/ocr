@@ -7,7 +7,7 @@ x-app-env: &app-env
     NODE_ENV: production
     BACKEND_PORT: 4010
     PG_URL: postgresql://${PG_OCR_USER}:${PG_OCR_PASSWORD}@postgres:5432/${PG_OCR_DB}
-    REDIS_OCR_HOST: redis
+    REDIS_OCR_HOST: redis-prod
     REDIS_OCR_PORT: 6379
     AMQP_URL: ${AMQP_URL}
     S3_ENDPOINT: http://garage-prod:3900
@@ -16,7 +16,9 @@ x-app-env: &app-env
     FRONTEND_ALLOWED_HOSTS: ${FRONTEND_ALLOWED_HOSTS:-ocr-frontend-prod}
   networks:
     - ocr-network
+    - redis-network
     - garage-network
+    - rabbitmq-network
 
 services:
   postgres:
@@ -43,38 +45,6 @@ services:
     networks:
       - ocr-network
 
-  redis:
-    image: redis:8-alpine
-    container_name: ocr-redis-prod
-    restart: unless-stopped
-    command: ["redis-server", "--requirepass", "${REDIS_OCR_PASSWORD}"]
-    healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_OCR_PASSWORD}", "ping"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-    ports:
-      - "127.0.0.1:${REDIS_OCR_PORT}:6379"
-    networks:
-      - ocr-network
-
-  rabbitmq:
-    image: rabbitmq:4-management-alpine
-    container_name: ocr-rabbitmq-prod
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
-      interval: 10s
-      timeout: 10s
-      retries: 10
-    ports:
-      - "127.0.0.1:${AMQP_HOST_PORT}:5672"
-      - "127.0.0.1:15673:15672"
-      - "127.0.0.1:15693:15692"
-    networks:
-      - ocr-network
-      - monitoring-shared
-
   db-migrate:
     <<: *app-env
     container_name: ocr-db-migrate-prod
@@ -99,15 +69,13 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      redis:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
       db-migrate:
         condition: service_completed_successfully
     networks:
       - ocr-network
+      - redis-network
       - garage-network
+      - rabbitmq-network
       - monitoring-shared
   
   frontend:
@@ -122,15 +90,13 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      redis:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
       db-migrate:
         condition: service_completed_successfully
     networks:
       - ocr-network
+      - redis-network
       - garage-network
+      - rabbitmq-network
       - monitoring-shared
 
   split-pdf-worker:
@@ -142,10 +108,6 @@ services:
     restart: unless-stopped
     depends_on:
       postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      rabbitmq:
         condition: service_healthy
       backend:
         condition: service_started
@@ -162,10 +124,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      redis:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
       backend:
         condition: service_started
       db-migrate:
@@ -180,10 +138,6 @@ services:
     restart: unless-stopped
     depends_on:
       postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      rabbitmq:
         condition: service_healthy
       backend:
         condition: service_started
@@ -200,8 +154,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      redis:
-        condition: service_healthy
       db-migrate:
         condition: service_completed_successfully
 
@@ -216,6 +168,12 @@ networks:
   monitoring-shared:
     name: ${MONITORING_SHARED_NETWORK:-monitoring-shared}
     external: true
+  redis-network:
+    name: redis-network
+    external: true
   garage-network:
     name: garage-network
+    external: true
+  rabbitmq-network:
+    name: rabbitmq-network
     external: true

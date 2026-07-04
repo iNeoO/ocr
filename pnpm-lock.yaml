@@ -82,6 +82,9 @@ importers:
         specifier: ^3.0.1
         version: 3.0.1(zod@4.3.6)
     devDependencies:
+      '@biomejs/biome':
+        specifier: 'catalog:'
+        version: 2.4.10
       '@types/node':
         specifier: 'catalog:'
         version: 24.12.2
@@ -216,6 +219,9 @@ importers:
         specifier: ^8.20.0
         version: 8.20.0
     devDependencies:
+      '@biomejs/biome':
+        specifier: 'catalog:'
+        version: 2.4.10
       '@types/node':
         specifier: 'catalog:'
         version: 24.12.2
@@ -249,6 +255,9 @@ importers:
       '@aws-sdk/client-s3':
         specifier: ^3.1026.0
         version: 3.1026.0
+      amqplib:
+        specifier: 'catalog:'
+        version: 0.10.9
       ioredis:
         specifier: ^5.10.1
         version: 5.10.1
@@ -265,6 +274,9 @@ importers:
       '@biomejs/biome':
         specifier: 'catalog:'
         version: 2.4.10
+      '@types/amqplib':
+        specifier: 'catalog:'
+        version: 0.10.8
       '@types/node':
         specifier: 'catalog:'
         version: 24.12.2

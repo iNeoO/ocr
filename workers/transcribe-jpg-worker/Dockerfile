@@ -48,20 +48,18 @@ RUN pnpm --filter @ocr/common build && \
 
 FROM base AS server
 
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/package.json ./package.json
-COPY --from=deps /app/pnpm-lock.yaml ./pnpm-lock.yaml
-COPY --from=deps /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
+COPY --chown=node:node --from=deps /app/node_modules ./node_modules
+COPY --chown=node:node --from=deps /app/package.json ./package.json
+COPY --chown=node:node --from=deps /app/pnpm-lock.yaml ./pnpm-lock.yaml
+COPY --chown=node:node --from=deps /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
 
-COPY --from=builder /app/db db
-COPY --from=builder /app/packages/common packages/common
-COPY --from=builder /app/packages/infra packages/infra
-COPY --from=builder /app/packages/services packages/services
-COPY --from=builder /app/workers/post-process-page-worker workers/post-process-page-worker
-COPY --from=builder /app/workers/split-pdf-worker workers/split-pdf-worker
-COPY --from=builder /app/workers/transcribe-jpg-worker workers/transcribe-jpg-worker
-
-RUN chown -R node:node /app
+COPY --chown=node:node --from=builder /app/db db
+COPY --chown=node:node --from=builder /app/packages/common packages/common
+COPY --chown=node:node --from=builder /app/packages/infra packages/infra
+COPY --chown=node:node --from=builder /app/packages/services packages/services
+COPY --chown=node:node --from=builder /app/workers/post-process-page-worker workers/post-process-page-worker
+COPY --chown=node:node --from=builder /app/workers/split-pdf-worker workers/split-pdf-worker
+COPY --chown=node:node --from=builder /app/workers/transcribe-jpg-worker workers/transcribe-jpg-worker
 
 USER node
 

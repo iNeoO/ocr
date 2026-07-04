@@ -102,20 +102,30 @@ Development infrastructure is defined in [`docker-compose.yaml`](./docker-compos
 Production services are defined in [`docker-compose.prod.yaml`](./docker-compose.prod.yaml):
 
 ```bash
-docker compose -f docker-compose.prod.yaml up -d --build
+docker compose --env-file .env.docker \
+  -f docker-compose.prod.yaml \
+  up -d --build --remove-orphans
 ```
 
 Main exposed production ports:
 
 - Backend: `4010`
 - PostgreSQL: `5436`
-- Redis: `6380`
-- RabbitMQ: `5673`
 
-Production object storage is provided by the shared Garage stack in
-[`../infra`](../infra). OCR containers join the external `garage-network` and
-reach Garage at `http://garage-prod:3900`; create the `ocr-prod` bucket and grant
-the production `S3_ACCESS_KEY` read/write access before deploying.
+Production Redis, RabbitMQ, and object storage are provided by the shared stack
+in [`../infra`](../infra). OCR containers join the external `redis-network`,
+`rabbitmq-network`, and `garage-network`, and connect to `redis-prod`,
+`rabbitmq-prod`, and `garage-prod`.
+
+Provision the production Garage key and bucket before the first deployment:
+
+```bash
+../infra/garage/provision-project.sh ocr-prod ocr-prod "$PWD/.env.docker"
+```
+
+Set `REDIS_OCR_USERNAME=ocr`, copy the dedicated `REDIS_OCR_PASSWORD` from the
+secret vault, and configure `AMQP_URL` with the existing OCR RabbitMQ user and
+`/ocr` vhost in `.env.docker`.
 
 ## Observability And Docs
 

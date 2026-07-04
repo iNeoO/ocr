@@ -27,6 +27,10 @@ export class TranscribeJpgPublisher {
 				.connect(this.amqpUrl)
 				.then(async (connection) => {
 					this.connection = connection;
+					connection.on("close", () => {
+						this.connection = undefined;
+						this.channelPromise = undefined;
+					});
 					const channel = await connection.createChannel();
 					await channel.assertQueue(this.queue, { durable: true });
 					return channel;

@@ -26,7 +26,7 @@ Recommended RabbitMQ scrape target:
       - queue_consumer_count
   static_configs:
     - targets:
-        - rabbitmq:15692
+        - rabbitmq-prod:15692
 ```
 
 This follows RabbitMQ's recommended split between aggregated metrics on `/metrics`

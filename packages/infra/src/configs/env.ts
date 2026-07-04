@@ -1,5 +1,11 @@
 import { z } from "zod";
 
+const environmentAliases = {
+	development: "dev",
+	test: "test",
+	production: "prod",
+} as const;
+
 export const envSchema = z
 	.object({
 		NODE_ENV: z
@@ -15,18 +21,12 @@ export const envSchema = z
 		REDIS_OCR_HOST: z.string(),
 		REDIS_OCR_PORT: z.coerce.number(),
 		AMQP_URL: z.string(),
-		S3_ACCESS_KEY: z.string().optional(),
-		S3_SECRET_KEY: z.string().optional(),
-		S3_ENDPOINT: z.url().optional(),
-		S3_BUCKET: z.string().optional(),
-		S3_REGION: z.string().optional(),
-		S3_FORCE_PATH_STYLE: z.coerce.boolean().optional(),
-		MINIO_ROOT_USER: z.string().optional(),
-		MINIO_ROOT_PASSWORD: z.string().optional(),
-		MINIO_ENDPOINT: z.url().optional(),
-		MINIO_BUCKET: z.string().optional(),
-		MINIO_REGION: z.string().optional(),
-		MINIO_FORCE_PATH_STYLE: z.coerce.boolean().optional(),
+		S3_ACCESS_KEY: z.string().min(1),
+		S3_SECRET_KEY: z.string().min(1),
+		S3_ENDPOINT: z.url(),
+		S3_BUCKET: z.string().min(1),
+		S3_REGION: z.string().min(1),
+		S3_FORCE_PATH_STYLE: z.coerce.boolean(),
 		BETTER_AUTH_SECRET: z.string().min(1),
 		BETTER_AUTH_URL: z.url(),
 		RESEND_API_KEY: z.string().min(1),
@@ -40,23 +40,12 @@ export const envSchema = z
 		OPENAI_API_KEY: z.string(),
 	})
 	.transform((env) => {
-		const accessKey = env.S3_ACCESS_KEY ?? env.MINIO_ROOT_USER;
-		const secretKey = env.S3_SECRET_KEY ?? env.MINIO_ROOT_PASSWORD;
-
-		if (!accessKey || !secretKey) {
-			throw new Error("S3_ACCESS_KEY and S3_SECRET_KEY must be set");
-		}
+		const redisKeyPrefix = `ocr:${environmentAliases[env.NODE_ENV]}:`;
 
 		return {
 			...env,
-			S3_ACCESS_KEY: accessKey,
-			S3_SECRET_KEY: secretKey,
-			S3_ENDPOINT:
-				env.S3_ENDPOINT ?? env.MINIO_ENDPOINT ?? "http://localhost:3900",
-			S3_BUCKET: env.S3_BUCKET ?? env.MINIO_BUCKET ?? "ocr-dev",
-			S3_REGION: env.S3_REGION ?? env.MINIO_REGION ?? "us-east-1",
-			S3_FORCE_PATH_STYLE:
-				env.S3_FORCE_PATH_STYLE ?? env.MINIO_FORCE_PATH_STYLE ?? true,
+			REDIS_KEY_PREFIX: redisKeyPrefix,
+			BETTER_AUTH_REDIS_KEY_PREFIX: `${redisKeyPrefix}better-auth:`,
 		};
 	});
 

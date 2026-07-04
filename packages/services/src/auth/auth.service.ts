@@ -34,6 +34,7 @@ export class AuthService {
 			mailService: this.mailService,
 			secret: env.BETTER_AUTH_SECRET,
 			url: env.BETTER_AUTH_URL,
+			redisKeyPrefix: env.BETTER_AUTH_REDIS_KEY_PREFIX,
 		});
 	}
 

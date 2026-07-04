@@ -3,13 +3,15 @@ import type { ProcessStatusEvent } from "./process-status.types.js";
 
 export class ProcessStatusPubSubService {
 	private readonly redis: RedisClient;
+	private readonly keyPrefix: string;
 
-	constructor(redis: RedisClient) {
+	constructor(redis: RedisClient, keyPrefix: string) {
 		this.redis = redis;
+		this.keyPrefix = keyPrefix;
 	}
 
 	getUserChannel(userId: string) {
-		return `process-status:user:${userId}`;
+		return `${this.keyPrefix}process-status:user:${userId}`;
 	}
 
 	async publishProcessStatusEvent(event: ProcessStatusEvent) {

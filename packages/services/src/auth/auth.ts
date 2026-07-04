@@ -11,6 +11,7 @@ export type CreateAuthOptions = {
 	mailService: MailService;
 	secret?: string;
 	url?: string;
+	redisKeyPrefix: string;
 };
 
 export const createAuth = ({
@@ -19,6 +20,7 @@ export const createAuth = ({
 	mailService,
 	secret,
 	url,
+	redisKeyPrefix,
 }: CreateAuthOptions) =>
 	betterAuth({
 		...(secret ? { secret } : {}),
@@ -73,7 +75,7 @@ export const createAuth = ({
 		}),
 		secondaryStorage: redisStorage({
 			client: redis,
-			keyPrefix: "better-auth:",
+			keyPrefix: redisKeyPrefix,
 		}),
 	});
 
