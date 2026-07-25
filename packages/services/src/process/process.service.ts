@@ -58,6 +58,15 @@ export class ProcessService {
 		return { start, end };
 	}
 
+	private hasUsableNativeText(text: string | undefined) {
+		if (!text) {
+			return false;
+		}
+
+		const words = text.match(/\p{L}[\p{L}\p{N}'’.-]*/gu) ?? [];
+		return text.trim().length >= 80 && words.length >= 12;
+	}
+
 	async assertDailyProcessLimit(userId: string) {
 		const { start, end } = this.getTodayWindow();
 		const [result] = await this.db
@@ -407,6 +416,16 @@ export class ProcessService {
 			const pages = await Promise.all(
 				images.map(async (image) => {
 					const pageId = randomUUID();
+					const nativeMarkdownFileId = this.hasUsableNativeText(
+						image.nativeText,
+					)
+						? await this.filesService.createPageMarkdownFile({
+								pageId,
+								pageNumber: image.pageNumber,
+								content: image.nativeText ?? "",
+								now,
+							})
+						: null;
 					const [createdPage] = await this.db
 						.insert(schema.page)
 						.values({
@@ -414,6 +433,7 @@ export class ProcessService {
 							processId,
 							pageNumber: image.pageNumber,
 							imageFileId: image.imageFileId,
+							markdownFileId: nativeMarkdownFileId,
 							status: "pending",
 							attemptCount: 0,
 							createdAt: now,

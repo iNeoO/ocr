@@ -1,9 +1,8 @@
-import { randomUUID } from "node:crypto";
-import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { existsSync } from "node:fs";
+import path from "node:path";
 import type { ProcessStatusStage } from "@ocr/common";
 import { type Database, schema } from "@ocr/db";
 import { getLoggerStore } from "@ocr/infra";
-import { s3, s3Config } from "@ocr/infra/s3";
 import type { PostProcessPagePublisher } from "@ocr/post-process-page-worker/publisher";
 import { count, eq, sql } from "drizzle-orm";
 import { createWorker } from "tesseract.js";
@@ -21,6 +20,11 @@ type PageServiceDependencies = {
 };
 
 export class PageService {
+	private static readonly OCR_LANGUAGE_PATH_CANDIDATES = [
+		path.join(process.cwd(), "workers/transcribe-jpg-worker"),
+		path.join(process.cwd(), "../../workers/transcribe-jpg-worker"),
+	];
+
 	private readonly db: Database;
 	private readonly filesService: FilesService;
 	private readonly processService: ProcessService;
@@ -39,6 +43,60 @@ export class PageService {
 		this.processService = processService;
 		this.llmService = llmService;
 		this.postProcessPagePublisher = postProcessPagePublisher;
+	}
+
+	private async createOcrWorker({
+		pageId,
+		processId,
+	}: {
+		pageId: string;
+		processId: string;
+	}) {
+		const logger = getLoggerStore();
+		const langPath = PageService.OCR_LANGUAGE_PATH_CANDIDATES.find(
+			(candidate) => existsSync(path.join(candidate, "eng.traineddata")),
+		);
+		const workerOptions = langPath
+			? {
+					langPath,
+					cacheMethod: "none" as const,
+					gzip: false,
+				}
+			: {
+					cacheMethod: "none" as const,
+				};
+
+		try {
+			return await createWorker("fra+eng", undefined, workerOptions);
+		} catch (error) {
+			logger.warn(
+				{ err: error, pageId, processId, langPath },
+				"Failed to create French OCR worker, falling back to English",
+			);
+			return createWorker("eng", undefined, workerOptions);
+		}
+	}
+
+	private buildPageMarkdownContent({
+		nativeText,
+		ocrText,
+	}: {
+		nativeText?: string | null;
+		ocrText: string;
+	}) {
+		const trimmedNativeText = nativeText?.trim();
+		const trimmedOcrText = ocrText.trim();
+
+		if (!trimmedNativeText) {
+			return trimmedOcrText;
+		}
+
+		return [
+			"## PDF text extraction",
+			trimmedNativeText,
+			"## OCR text extraction",
+			trimmedOcrText || "_No OCR text detected._",
+		].join("\n\n");
 	}
 
 	async getPageById(id: string) {
@@ -84,6 +142,10 @@ export class PageService {
 		if (!page.imageFileId) {
 			throw new Error("Page image file not found");
 		}
+
+		const nativeText = page.markdownFileId
+			? await this.filesService.getFileText(page.markdownFileId)
+			: null;
 
 		await this.db
 			.update(schema.page)
@@ -131,7 +193,10 @@ export class PageService {
 				},
 				"Downloaded page image buffer",
 			);
-			const worker = await createWorker("eng");
+			const worker = await this.createOcrWorker({
+				pageId,
+				processId: page.processId,
+			});
 			logger.info(
 				{ pageId, processId: page.processId },
 				"Created tesseract worker",
@@ -140,11 +205,17 @@ export class PageService {
 			try {
 				const result = await worker.recognize(buffer);
 				const text = result.data.text.trim();
+				const markdownContent = this.buildPageMarkdownContent({
+					nativeText,
+					ocrText: text,
+				});
 				logger.info(
 					{
 						pageId,
 						processId: page.processId,
 						textLength: text.length,
+						nativeTextLength: nativeText?.length ?? 0,
+						markdownContentLength: markdownContent.length,
 					},
 					"Finished OCR recognition",
 				);
@@ -154,19 +225,22 @@ export class PageService {
 					(await this.createMarkdownFile({
 						pageId: page.id,
 						pageNumber: page.pageNumber,
-						content: text,
+						content: markdownContent,
 						now,
 					}));
 
 				if (page.markdownFileId) {
-					await this.filesService.replaceFileContent(page.markdownFileId, text);
+					await this.filesService.replaceFileContent(
+						page.markdownFileId,
+						markdownContent,
+					);
 					logger.info(
 						{
 							pageId,
 							processId: page.processId,
 							markdownFileId: page.markdownFileId,
 						},
-						"Replaced markdown OCR content in storage",
+						"Replaced markdown content with native PDF text and OCR text",
 					);
 				}
 
@@ -410,33 +484,11 @@ export class PageService {
 		content: string;
 		now: Date;
 	}) {
-		const markdownFileId = randomUUID();
-		const filename = `page-${pageNumber}.md`;
-		const objectKey = `pages/${pageId}/${markdownFileId}.md`;
-		const body = Buffer.from(content, "utf-8");
-
-		await s3.send(
-			new PutObjectCommand({
-				Bucket: s3Config.bucket,
-				Key: objectKey,
-				Body: body,
-				ContentLength: body.length,
-				ContentType: "text/markdown; charset=utf-8",
-			}),
-		);
-
-		await this.db.insert(schema.file).values({
-			id: markdownFileId,
-			kind: "page_markdown",
-			bucket: s3Config.bucket,
-			objectKey,
-			mimeType: "text/markdown",
-			size: body.length,
-			filename,
-			createdAt: now,
-			updatedAt: now,
+		return this.filesService.createPageMarkdownFile({
+			pageId,
+			pageNumber,
+			content,
+			now,
 		});
-
-		return markdownFileId;
 	}
 }

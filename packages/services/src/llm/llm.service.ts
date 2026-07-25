@@ -25,7 +25,7 @@ export class LlmService {
 							source: {
 								type: "data",
 								value: Buffer.from(imageBuffer).toString("base64"),
-								mimeType: "image/jpeg",
+								mimeType: "image/png",
 							},
 						},
 					],

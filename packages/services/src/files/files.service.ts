@@ -13,6 +13,8 @@ import { fileToNodeStream } from "./files.helpers.js";
 import type { SplitPageImage } from "./files.type.js";
 
 export class FilesService {
+	private static readonly PAGE_SCREENSHOT_SCALE = 4;
+
 	private readonly db: Database;
 
 	constructor(db: Database) {
@@ -119,6 +121,47 @@ export class FilesService {
 		return updatedFile;
 	}
 
+	async createPageMarkdownFile({
+		pageId,
+		pageNumber,
+		content,
+		now,
+	}: {
+		pageId: string;
+		pageNumber: number;
+		content: string;
+		now: Date;
+	}) {
+		const markdownFileId = randomUUID();
+		const filename = `page-${pageNumber}.md`;
+		const objectKey = `pages/${pageId}/${markdownFileId}.md`;
+		const body = Buffer.from(content, "utf-8");
+
+		await s3.send(
+			new PutObjectCommand({
+				Bucket: s3Config.bucket,
+				Key: objectKey,
+				Body: body,
+				ContentLength: body.length,
+				ContentType: "text/markdown; charset=utf-8",
+			}),
+		);
+
+		await this.db.insert(schema.file).values({
+			id: markdownFileId,
+			kind: "page_markdown",
+			bucket: s3Config.bucket,
+			objectKey,
+			mimeType: "text/markdown",
+			size: body.length,
+			filename,
+			createdAt: now,
+			updatedAt: now,
+		});
+
+		return markdownFileId;
+	}
+
 	async deleteFiles(fileIds: string[]) {
 		const uniqueFileIds = [...new Set(fileIds.filter(Boolean))];
 		if (uniqueFileIds.length === 0) {
@@ -169,15 +212,21 @@ export class FilesService {
 		const parser = new PDFParse({ data: bytes });
 		let isCleanedUp = false;
 		try {
-			const result = await parser.getScreenshot();
+			const screenshotResult = await parser.getScreenshot({
+				scale: FilesService.PAGE_SCREENSHOT_SCALE,
+			});
+			const textResult = await parser.getText();
 			await parser.destroy();
 			isCleanedUp = true;
 
 			const createdPages = await Promise.all(
-				result.pages.map(async (page, index) => {
+				screenshotResult.pages.map(async (page, index) => {
 					const pageId = randomUUID();
 					const pageObjectKey = `files/${file.id}/pages/${pageId}.png`;
 					const now = new Date();
+					const nativeText = textResult.pages
+						.find((textPage) => textPage.num === index + 1)
+						?.text.trim();
 
 					await s3.send(
 						new PutObjectCommand({
@@ -203,6 +252,7 @@ export class FilesService {
 					return {
 						pageNumber: index + 1,
 						imageFileId: pageId,
+						...(nativeText ? { nativeText } : {}),
 					} satisfies SplitPageImage;
 				}),
 			);
