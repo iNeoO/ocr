@@ -5,7 +5,6 @@ ARG PNPM_VERSION=10.33.0
 
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
-ENV NODE_ENV=production
 
 RUN npm install --global corepack@latest && \
     corepack enable && \
@@ -48,6 +47,8 @@ RUN pnpm --filter @ocr/common build && \
     pnpm --filter @ocr/cleanup-process-worker build
 
 FROM base AS server
+
+ENV NODE_ENV=production
 
 COPY --chown=node:node --from=deps /app/node_modules ./node_modules
 COPY --chown=node:node --from=deps /app/package.json ./package.json

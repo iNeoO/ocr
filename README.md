@@ -20,7 +20,6 @@ The repository is a `pnpm` monorepo split into a few clear areas:
 - `workers/*`: queue-driven pipeline workers for splitting, transcription, post-processing, and cleanup
 - `packages/*`: shared business services, infra utilities, and common types
 - `db`: Drizzle schema, migrations, and database tooling
-- `monitoring`: Grafana dashboard and Prometheus scrape notes
 - `doc`: RFC notes
 
 There is no separate API process: the TanStack Start server owns Postgres,
@@ -108,7 +107,7 @@ docker compose --env-file .env.docker \
 
 Main exposed production ports:
 
-- Frontend (application server): `3010`
+- Frontend / TanStack Start application server: `3010`
 - PostgreSQL: `5436`
 
 Production Redis, RabbitMQ, and object storage are provided by the shared stack
@@ -126,28 +125,18 @@ Set `REDIS_OCR_USERNAME=ocr`, copy the dedicated `REDIS_OCR_PASSWORD` from the
 secret vault, and configure `AMQP_URL` with the existing OCR RabbitMQ user and
 `/ocr` vhost in `.env.docker`.
 
+The reverse proxy should target only the frontend container on `127.0.0.1:3010`.
+There is no backend upstream anymore. Keep `BETTER_AUTH_URL` aligned with the
+public HTTPS origin and add any internal proxy/probe hostnames to
+`FRONTEND_ALLOWED_HOSTS` as a comma-separated list.
+
 ## Observability And Docs
 
-- Monitoring guide: [`monitoring/README.md`](./monitoring/README.md)
-- Grafana dashboard: [`monitoring/grafana/dashboards/ocr-observability.json`](./monitoring/grafana/dashboards/ocr-observability.json)
 - Project notes: [`doc/rfc.md`](./doc/rfc.md)
 
-The frontend exposes `/metrics`; if it is served through `vite preview`, make sure the probe hostname is allowed through `FRONTEND_ALLOWED_HOSTS` when needed.
-
-### Known observability debt
-
-Removing the tRPC backend removed its `prom-client` instrumentation with it.
-The following stays broken until a dedicated follow-up moves `prom-client` into
-the Start server and instruments the server functions:
-
-- The `ocr_backend_*` series are no longer produced. Seven panels of
-  [`monitoring/grafana/dashboards/ocr-observability.json`](./monitoring/grafana/dashboards/ocr-observability.json)
-  depend on them: tRPC success rate, tRPC error rate, tRPC p95 latency, active
-  subscriptions, requests by procedure, p95 latency by procedure, and HTTP
-  requests by route/status — plus the per-procedure summary table.
-- The `4010/metrics` scrape target no longer exists.
-- The hand-rolled `/metrics` of `apps/frontend/src/routes/metrics.ts` is
-  unchanged and still uninstrumented.
+The frontend exposes `/metrics`; if it is served through `vite preview`, make
+sure the probe hostname is allowed through `FRONTEND_ALLOWED_HOSTS` when needed.
+Monitoring dashboards and scrape configuration are handled separately.
 
 ## License
 
