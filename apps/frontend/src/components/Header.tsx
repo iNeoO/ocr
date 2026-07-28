@@ -15,7 +15,7 @@ export default function Header() {
 					>
 						<span className="h-2.5 w-2.5 rounded-full bg-[linear-gradient(135deg,var(--accent),#ffe1c5)] shadow-[0_0_18px_rgba(255,158,88,0.65)]" />
 						<span className="mono-label text-[0.7rem] tracking-[0.22em]">
-							OCR // deck
+							{"OCR // deck"}
 						</span>
 					</Link>
 				</h2>

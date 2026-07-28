@@ -11,7 +11,6 @@ function App() {
 	return (
 		<Container size="4" px="4" py={{ initial: "7", sm: "8" }}>
 			<div className="grid gap-5">
-
 				{/* HERO — centré, full width */}
 				<section className="hero-panel grid-noise overflow-hidden px-5 py-10 sm:px-10 sm:py-16">
 					<div className="mx-auto grid max-w-3xl gap-7 text-center">
@@ -38,7 +37,8 @@ function App() {
 							style={{ "--stagger-delay": "170ms" } as CSSProperties}
 						>
 							OCR turns upload, split, transcription and delivery into one
-							focused deck — built for operational clarity over generic app shells.
+							focused deck — built for operational clarity over generic app
+							shells.
 						</Text>
 
 						<Flex
@@ -48,7 +48,10 @@ function App() {
 							className="stagger-enter"
 							style={{ "--stagger-delay": "250ms" } as CSSProperties}
 						>
-							<Link to={session ? "/processes" : "/login"} className="terminal-button">
+							<Link
+								to={session ? "/processes" : "/login"}
+								className="terminal-button"
+							>
 								{session ? "Open process deck" : "Login"}
 							</Link>
 							{session ? null : (
@@ -70,21 +73,27 @@ function App() {
 						>
 							<div className="metric-card">
 								<p className="section-kicker m-0">Step 01</p>
-								<p className="panel-title mt-2 text-base font-semibold">Upload</p>
+								<p className="panel-title mt-2 text-base font-semibold">
+									Upload
+								</p>
 								<p className="metric-label m-0 text-sm">
 									Drop a PDF into the intake zone to open a new OCR run.
 								</p>
 							</div>
 							<div className="metric-card">
 								<p className="section-kicker m-0">Step 02</p>
-								<p className="panel-title mt-2 text-base font-semibold">Monitor</p>
+								<p className="panel-title mt-2 text-base font-semibold">
+									Monitor
+								</p>
 								<p className="metric-label m-0 text-sm">
 									Track splitting, OCR and post-processing inside one dashboard.
 								</p>
 							</div>
 							<div className="metric-card">
 								<p className="section-kicker m-0">Step 03</p>
-								<p className="panel-title mt-2 text-base font-semibold">Deliver</p>
+								<p className="panel-title mt-2 text-base font-semibold">
+									Deliver
+								</p>
 								<p className="metric-label m-0 text-sm">
 									Download structured archives once the pipeline completes.
 								</p>
@@ -126,8 +135,8 @@ function App() {
 								Sharper hierarchy
 							</Heading>
 							<Text className="mt-3 block text-(--text-muted)">
-								Display for signal, mono for system cues, and stronger
-								contrast for states, actions and forms.
+								Display for signal, mono for system cues, and stronger contrast
+								for states, actions and forms.
 							</Text>
 						</article>
 						<article
@@ -145,7 +154,6 @@ function App() {
 						</article>
 					</div>
 				</section>
-
 			</div>
 		</Container>
 	);

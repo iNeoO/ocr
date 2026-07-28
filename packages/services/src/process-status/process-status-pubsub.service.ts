@@ -1,5 +1,9 @@
+import { pinoLogger } from "@ocr/infra";
 import type { RedisClient } from "@ocr/infra/redis";
-import type { ProcessStatusEvent } from "./process-status.types.js";
+import {
+	type ProcessStatusEvent,
+	processStatusEventSchema,
+} from "./process-status.types.js";
 
 export class ProcessStatusPubSubService {
 	private readonly redis: RedisClient;
@@ -33,7 +37,28 @@ export class ProcessStatusPubSubService {
 				return;
 			}
 
-			onMessage(JSON.parse(payload) as ProcessStatusEvent);
+			let parsedPayload: unknown;
+
+			try {
+				parsedPayload = JSON.parse(payload);
+			} catch (error) {
+				pinoLogger.error(
+					{ err: error, channel },
+					"Malformed process status event",
+				);
+				return;
+			}
+
+			const parsedEvent = processStatusEventSchema.safeParse(parsedPayload);
+			if (!parsedEvent.success) {
+				pinoLogger.error(
+					{ err: parsedEvent.error, channel },
+					"Unexpected process status event",
+				);
+				return;
+			}
+
+			onMessage(parsedEvent.data);
 		});
 
 		await subscriber.subscribe(channel);

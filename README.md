@@ -11,24 +11,25 @@ Production app: [ocr.tuturu.io](https://ocr.tuturu.io)
 - PDF split into pages
 - OCR transcription on generated page images
 - Post-processing and downloadable archive delivery
-- Backend metrics endpoint for observability
 
 ## Architecture
 
 The repository is a `pnpm` monorepo split into a few clear areas:
 
-- `apps/frontend`: React, Vite, TanStack Router UI
-- `apps/backend`: Node.js, TypeScript, tRPC API and metrics endpoint
+- `apps/frontend`: the single application server — React, Vite, TanStack Start / Router / Query UI **and** the server layer (server functions and route handlers) that calls the business services in memory
 - `workers/*`: queue-driven pipeline workers for splitting, transcription, post-processing, and cleanup
 - `packages/*`: shared business services, infra utilities, and common types
 - `db`: Drizzle schema, migrations, and database tooling
 - `monitoring`: Grafana dashboard and Prometheus scrape notes
-- `doc`: RFC notes and generated OpenAPI document
+- `doc`: RFC notes
+
+There is no separate API process: the TanStack Start server owns Postgres,
+Redis, S3, and RabbitMQ access directly.
 
 ## Stack
 
-- Frontend: React, TypeScript, Vite, TanStack Router, Radix UI
-- Backend: Node.js, TypeScript, tRPC
+- Frontend: React, TypeScript, Vite, TanStack Router, TanStack Query, Radix UI
+- Server: TanStack Start server functions and route handlers (Node.js, TypeScript)
 - Database: PostgreSQL with Drizzle ORM
 - Messaging and cache: RabbitMQ, Redis
 - Object storage: Garage / S3-compatible storage
@@ -37,11 +38,11 @@ The repository is a `pnpm` monorepo split into a few clear areas:
 ## End-To-End Flow
 
 1. A user uploads a PDF from the frontend.
-2. The backend creates a process and stores the source file.
+2. The Start server creates a process and stores the source file.
 3. A split worker turns the PDF into page images.
 4. OCR workers transcribe the pages.
 5. A post-processing worker assembles the final result.
-6. The frontend receives live process updates and exposes download actions when the run is complete.
+6. The browser receives live process updates over SSE (`GET /api/processes/status`) and exposes download actions when the run is complete.
 
 ## Local Development
 
@@ -80,7 +81,7 @@ Run the full app in development mode:
 pnpm dev
 ```
 
-`pnpm dev` first builds the runtime packages, then starts the backend, frontend, and all workers concurrently.
+`pnpm dev` first builds the runtime packages, then starts the frontend server and all workers concurrently.
 
 ## Useful Commands
 
@@ -91,8 +92,6 @@ pnpm lint
 pnpm db:generate
 pnpm db:migrate
 pnpm garage:init
-pnpm scripts:generate-openapi
-pnpm scripts:serve-openapi
 ```
 
 ## Docker And Deployment
@@ -109,7 +108,7 @@ docker compose --env-file .env.docker \
 
 Main exposed production ports:
 
-- Backend: `4010`
+- Frontend (application server): `3010`
 - PostgreSQL: `5436`
 
 Production Redis, RabbitMQ, and object storage are provided by the shared stack
@@ -131,11 +130,24 @@ secret vault, and configure `AMQP_URL` with the existing OCR RabbitMQ user and
 
 - Monitoring guide: [`monitoring/README.md`](./monitoring/README.md)
 - Grafana dashboard: [`monitoring/grafana/dashboards/ocr-observability.json`](./monitoring/grafana/dashboards/ocr-observability.json)
-- OpenAPI artifact: [`doc/openapi.json`](./doc/openapi.json)
 - Project notes: [`doc/rfc.md`](./doc/rfc.md)
 
-The backend metrics endpoint is exposed on `/metrics`.
-The frontend also exposes `/metrics`; if it is served through `vite preview`, make sure the probe hostname is allowed through `FRONTEND_ALLOWED_HOSTS` when needed.
+The frontend exposes `/metrics`; if it is served through `vite preview`, make sure the probe hostname is allowed through `FRONTEND_ALLOWED_HOSTS` when needed.
+
+### Known observability debt
+
+Removing the tRPC backend removed its `prom-client` instrumentation with it.
+The following stays broken until a dedicated follow-up moves `prom-client` into
+the Start server and instruments the server functions:
+
+- The `ocr_backend_*` series are no longer produced. Seven panels of
+  [`monitoring/grafana/dashboards/ocr-observability.json`](./monitoring/grafana/dashboards/ocr-observability.json)
+  depend on them: tRPC success rate, tRPC error rate, tRPC p95 latency, active
+  subscriptions, requests by procedure, p95 latency by procedure, and HTTP
+  requests by route/status — plus the per-procedure summary table.
+- The `4010/metrics` scrape target no longer exists.
+- The hand-rolled `/metrics` of `apps/frontend/src/routes/metrics.ts` is
+  unchanged and still uninstrumented.
 
 ## License
 

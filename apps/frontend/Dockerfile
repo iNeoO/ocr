@@ -16,7 +16,6 @@ WORKDIR /app
 FROM base AS deps
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY apps/backend/package.json apps/backend/package.json
 COPY apps/frontend/package.json apps/frontend/package.json
 COPY db/package.json db/package.json
 COPY packages/common/package.json packages/common/package.json
@@ -31,7 +30,6 @@ RUN pnpm install --frozen-lockfile
 
 FROM deps AS builder
 
-COPY apps/backend apps/backend
 COPY apps/frontend apps/frontend
 COPY db db
 COPY packages/common packages/common
@@ -53,6 +51,16 @@ COPY --chown=node:node --from=deps /app/pnpm-lock.yaml ./pnpm-lock.yaml
 COPY --chown=node:node --from=deps /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
 
 COPY --chown=node:node --from=builder /app/apps/frontend apps/frontend
+# The workspace packages ship with the image: the frontend server resolves them
+# at runtime, and the `db-migrate` compose service reuses this image to run
+# `pnpm --filter @ocr/db migrate`.
+COPY --chown=node:node --from=builder /app/db db
+COPY --chown=node:node --from=builder /app/packages/common packages/common
+COPY --chown=node:node --from=builder /app/packages/infra packages/infra
+COPY --chown=node:node --from=builder /app/packages/services packages/services
+COPY --chown=node:node --from=builder /app/workers/post-process-page-worker workers/post-process-page-worker
+COPY --chown=node:node --from=builder /app/workers/split-pdf-worker workers/split-pdf-worker
+COPY --chown=node:node --from=builder /app/workers/transcribe-jpg-worker workers/transcribe-jpg-worker
 
 USER node
 

@@ -17,8 +17,7 @@ const toAsciiFilename = (filename: string) => {
 	return ascii || "download";
 };
 
-const escapeQuotedString = (value: string) =>
-	value.replace(/["\\]/g, "\\$&");
+const escapeQuotedString = (value: string) => value.replace(/["\\]/g, "\\$&");
 
 export const buildContentDispositionAttachment = (filename: string) => {
 	const fallback = escapeQuotedString(toAsciiFilename(filename));

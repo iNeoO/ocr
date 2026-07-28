@@ -1,36 +1,52 @@
-import { useState } from "react";
-import { useRouter } from "@tanstack/react-router";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { useState } from "react";
 import {
 	deleteProcess,
 	downloadProcessArchive,
+	processesQueryKey,
 	type UserProcess,
 	uploadProcessFile,
 } from "../../libs/api/processes";
 import { triggerBrowserDownload } from "./processes.helpers";
 
 export function useProcessActions() {
-	const router = useRouter();
+	const queryClient = useQueryClient();
 	const removeProcess = useServerFn(deleteProcess);
-	const [isUploading, setIsUploading] = useState(false);
-	const [downloadProcessId, setDownloadProcessId] = useState<string | null>(null);
-	const [deleteProcessId, setDeleteProcessId] = useState<string | null>(null);
+	const uploadFile = useServerFn(uploadProcessFile);
+	const [downloadProcessId, setDownloadProcessId] = useState<string | null>(
+		null,
+	);
 	const [actionError, setActionError] = useState<string | null>(null);
 	const [pendingDeleteProcess, setPendingDeleteProcess] =
 		useState<UserProcess | null>(null);
 
+	const invalidateProcesses = () =>
+		queryClient.invalidateQueries({ queryKey: processesQueryKey });
+
+	const uploadMutation = useMutation({
+		mutationFn: (file: File) => {
+			const formData = new FormData();
+			formData.append("file", file);
+
+			return uploadFile({ data: formData });
+		},
+		onSuccess: invalidateProcesses,
+	});
+
+	const deleteMutation = useMutation({
+		mutationFn: (processId: string) => removeProcess({ data: { processId } }),
+		onSuccess: invalidateProcesses,
+	});
+
 	const upload = async (file: File) => {
-		setIsUploading(true);
 		setActionError(null);
 
 		try {
-			await uploadProcessFile(file);
-			await router.invalidate();
+			await uploadMutation.mutateAsync(file);
 		} catch (error) {
 			setActionError(error instanceof Error ? error.message : "Upload failed.");
 			throw error;
-		} finally {
-			setIsUploading(false);
 		}
 	};
 
@@ -42,7 +58,9 @@ export function useProcessActions() {
 			const { blob, filename } = await downloadProcessArchive(processId);
 			triggerBrowserDownload(blob, filename);
 		} catch (error) {
-			setActionError(error instanceof Error ? error.message : "Download failed.");
+			setActionError(
+				error instanceof Error ? error.message : "Download failed.",
+			);
 			throw error;
 		} finally {
 			setDownloadProcessId((currentProcessId) =>
@@ -61,28 +79,23 @@ export function useProcessActions() {
 			return;
 		}
 
-		const processId = pendingDeleteProcess.id;
-		setDeleteProcessId(processId);
 		setActionError(null);
 
 		try {
-			await removeProcess({ data: { processId } });
+			await deleteMutation.mutateAsync(pendingDeleteProcess.id);
 			setPendingDeleteProcess(null);
-			await router.invalidate();
 		} catch (error) {
 			setActionError(error instanceof Error ? error.message : "Delete failed.");
 			throw error;
-		} finally {
-			setDeleteProcessId((currentProcessId) =>
-				currentProcessId === processId ? null : currentProcessId,
-			);
 		}
 	};
 
 	return {
-		isUploading,
+		isUploading: uploadMutation.isPending,
 		downloadProcessId,
-		deleteProcessId,
+		deleteProcessId: deleteMutation.isPending
+			? (deleteMutation.variables ?? null)
+			: null,
 		actionError,
 		pendingDeleteProcess,
 		setActionError,

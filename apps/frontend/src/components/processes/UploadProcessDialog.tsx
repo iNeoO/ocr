@@ -1,13 +1,6 @@
+import { Box, Button, Callout, Dialog, Flex, Text } from "@radix-ui/themes";
 import { FileText, Upload } from "lucide-react";
-import { type DragEvent, type RefObject } from "react";
-import {
-	Box,
-	Button,
-	Callout,
-	Dialog,
-	Flex,
-	Text,
-} from "@radix-ui/themes";
+import type { DragEvent, RefObject } from "react";
 
 type UploadProcessDialogProps = {
 	isOpen: boolean;
@@ -47,9 +40,9 @@ export function UploadProcessDialog({
 			<Dialog.Content maxWidth="640px" className="upload-dialog-content">
 				<Dialog.Title className="display-title">Upload a PDF</Dialog.Title>
 				<Dialog.Description size="2" mb="5" className="text-(--text-muted)">
-					Drag your file here or use the button to start a new process. Only
-					PDF files are accepted. Limit: 5 uploads per day per user. If you
-					delete a completed or failed process, you free up a slot.
+					Drag your file here or use the button to start a new process. Only PDF
+					files are accepted. Limit: 5 uploads per day per user. If you delete a
+					completed or failed process, you free up a slot.
 				</Dialog.Description>
 				<Flex direction="column" gap="4">
 					{uploadError ? (
@@ -62,7 +55,7 @@ export function UploadProcessDialog({
 						className={`upload-dropzone ${isDragging ? "is-dragging" : ""}`}
 					>
 						<label
-							className="flex min-h-[20rem] cursor-pointer items-center justify-center px-5 py-6"
+							className="flex min-h-80 cursor-pointer items-center justify-center px-5 py-6"
 							onDrop={onDrop}
 							onDragOver={onDragOver}
 							onDragLeave={onDragLeave}
@@ -81,7 +74,12 @@ export function UploadProcessDialog({
 									<Upload size={34} strokeWidth={2.2} />
 								</Box>
 								<Flex direction="column" align="center" gap="2">
-									<Text size="6" weight="bold" align="center" className="text-(--text-strong)">
+									<Text
+										size="6"
+										weight="bold"
+										align="center"
+										className="text-(--text-strong)"
+									>
 										Drop your PDF here or click to upload
 									</Text>
 									<Text size="2" align="center" className="text-(--text-muted)">
@@ -112,7 +110,11 @@ export function UploadProcessDialog({
 										<FileText size={18} />
 									</Box>
 									<Flex direction="column" gap="1">
-										<Text size="2" weight="bold" className="text-(--text-strong)">
+										<Text
+											size="2"
+											weight="bold"
+											className="text-(--text-strong)"
+										>
 											{selectedFile.name}
 										</Text>
 										<Text size="1" className="text-(--text-muted)">

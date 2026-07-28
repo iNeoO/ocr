@@ -13,8 +13,9 @@ type ManagedFile = {
 
 const hasFlag = (flag: string) => process.argv.includes(flag);
 
-const uniqueDefined = (values: Array<string | null>) =>
-	[...new Set(values.filter((value): value is string => Boolean(value)))];
+const uniqueDefined = (values: Array<string | null>) => [
+	...new Set(values.filter((value): value is string => Boolean(value))),
+];
 
 async function loadManagedFiles() {
 	const processes = await db
@@ -28,7 +29,10 @@ async function loadManagedFiles() {
 	if (processes.length === 0) {
 		return {
 			processes,
-			pages: [] as Array<{ imageFileId: string | null; markdownFileId: string | null }>,
+			pages: [] as Array<{
+				imageFileId: string | null;
+				markdownFileId: string | null;
+			}>,
 			files: [] as ManagedFile[],
 		};
 	}
@@ -43,7 +47,10 @@ async function loadManagedFiles() {
 		.where(inArray(schema.page.processId, processIds));
 
 	const fileIds = uniqueDefined([
-		...processes.flatMap((process) => [process.sourceFileId, process.zipFileId]),
+		...processes.flatMap((process) => [
+			process.sourceFileId,
+			process.zipFileId,
+		]),
 		...pages.flatMap((page) => [page.imageFileId, page.markdownFileId]),
 	]);
 
@@ -111,9 +118,7 @@ async function main() {
 	}
 
 	if (deletedFileIds.length > 0) {
-		await db
-			.delete(schema.file)
-			.where(inArray(schema.file.id, deletedFileIds));
+		await db.delete(schema.file).where(inArray(schema.file.id, deletedFileIds));
 	}
 
 	console.log(

@@ -71,10 +71,10 @@ function RouteComponent() {
 		});
 
 		if (!parsed.success) {
-			const fields = parsed.error.flatten().fieldErrors;
+			const { fieldErrors } = z.flattenError(parsed.error);
 			setFieldErrors({
-				password: fields.password?.[0],
-				confirmPassword: fields.confirmPassword?.[0],
+				password: fieldErrors.password?.[0],
+				confirmPassword: fieldErrors.confirmPassword?.[0],
 			});
 			return;
 		}
@@ -113,14 +113,24 @@ function RouteComponent() {
 		>
 			<Flex direction="column" gap="4">
 				{errorMessage ? (
-					<Callout.Root color="red" variant="soft" size="2" className="surface-callout">
+					<Callout.Root
+						color="red"
+						variant="soft"
+						size="2"
+						className="surface-callout"
+					>
 						<Callout.Text>{errorMessage}</Callout.Text>
 					</Callout.Root>
 				) : null}
 
 				{isSubmitted ? (
 					<Flex direction="column" gap="4">
-						<Callout.Root color="green" variant="soft" size="2" className="surface-callout">
+						<Callout.Root
+							color="green"
+							variant="soft"
+							size="2"
+							className="surface-callout"
+						>
 							<Callout.Text>
 								Password reset successful. You can now sign in.
 							</Callout.Text>
@@ -195,7 +205,12 @@ function RouteComponent() {
 									) : null}
 								</Box>
 
-								<Button type="submit" size="3" disabled={isSubmitting} className="rounded-full">
+								<Button
+									type="submit"
+									size="3"
+									disabled={isSubmitting}
+									className="rounded-full"
+								>
 									{isSubmitting ? "Resetting..." : "Reset password"}
 								</Button>
 							</Flex>

@@ -2,8 +2,9 @@ import tailwindcss from "@tailwindcss/vite";
 import { devtools } from "@tanstack/devtools-vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react";
-import { defineConfig, loadEnv } from "vite";
+import { defineConfig, loadEnv, type PluginOption } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
+import { getRunningContainer } from "./src/libs/server/container-registry";
 
 const getAllowedHosts = (
 	betterAuthUrl?: string,
@@ -40,6 +41,49 @@ const getAllowedHosts = (
 	return [...new Set(allowedHosts)];
 };
 
+/**
+ * Sequences the app's resource teardown behind Vite's HTTP drain.
+ *
+ * `vite preview` — the container CMD — registers its own
+ * `process.once("SIGTERM")` that awaits `server.close()` and then calls
+ * `process.exit()`. Shutting the pools down from a competing signal handler
+ * would run in parallel with that drain (in-flight requests hitting a closed
+ * pool) and be truncated by the exit (pg/RabbitMQ connections abandoned
+ * server-side). Wrapping `server.close` instead puts us *inside* Vite's own
+ * sequence: drain first, then close resources, then Vite exits.
+ *
+ * Preview only: `vite dev` calls `server.close()` on config-change restarts
+ * too, and killing the pools there would leave the surviving global container
+ * pointing at dead clients.
+ */
+const gracefulShutdownPlugin = (): PluginOption => ({
+	name: "ocr:graceful-shutdown",
+	apply: "serve",
+	configurePreviewServer: {
+		order: "post",
+		handler(server) {
+			const closeHttpServer = server.close.bind(server);
+
+			server.close = async () => {
+				await closeHttpServer();
+
+				// Absent when no request ever built the container — nothing to close.
+				const container = getRunningContainer();
+				if (!container) return;
+
+				console.info("HTTP server closed. Releasing server resources.");
+				await container.shutdown();
+			};
+
+			// Vite only handles SIGTERM. Registering SIGINT suppresses Node's default
+			// terminate-on-Ctrl-C, so this handler must exit the process itself.
+			process.once("SIGINT", () => {
+				void server.close().finally(() => process.exit(130));
+			});
+		},
+	},
+});
+
 const config = defineConfig(({ mode }) => {
 	const env = loadEnv(mode, process.cwd(), "");
 
@@ -50,16 +94,8 @@ const config = defineConfig(({ mode }) => {
 			tailwindcss(),
 			tanstackStart(),
 			viteReact(),
+			gracefulShutdownPlugin(),
 		],
-		server: {
-			proxy: {
-				"/trpc": {
-					target: "http://localhost:4010",
-					changeOrigin: true,
-					rewrite: (path) => path.replace(/^\/trpc/, ""),
-				},
-			},
-		},
 		preview: {
 			host: "0.0.0.0",
 			port: 3010,

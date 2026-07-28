@@ -48,7 +48,9 @@ function RouteComponent() {
 		const parsed = requestResetSchema.safeParse({ email: email.trim() });
 
 		if (!parsed.success) {
-			setFieldError(parsed.error.flatten().fieldErrors.email?.[0] ?? null);
+			setFieldError(
+				z.flattenError(parsed.error).fieldErrors.email?.[0] ?? null,
+			);
 			return;
 		}
 
@@ -83,13 +85,23 @@ function RouteComponent() {
 		>
 			<Flex direction="column" gap="4">
 				{errorMessage ? (
-					<Callout.Root color="red" variant="soft" size="2" className="surface-callout">
+					<Callout.Root
+						color="red"
+						variant="soft"
+						size="2"
+						className="surface-callout"
+					>
 						<Callout.Text>{errorMessage}</Callout.Text>
 					</Callout.Root>
 				) : null}
 
 				{isSubmitted ? (
-					<Callout.Root color="green" variant="soft" size="2" className="surface-callout">
+					<Callout.Root
+						color="green"
+						variant="soft"
+						size="2"
+						className="surface-callout"
+					>
 						<Callout.Text>
 							If this email exists, we sent a reset link.
 						</Callout.Text>
@@ -124,7 +136,12 @@ function RouteComponent() {
 									) : null}
 								</Box>
 
-								<Button type="submit" size="3" disabled={isSubmitting} className="rounded-full">
+								<Button
+									type="submit"
+									size="3"
+									disabled={isSubmitting}
+									className="rounded-full"
+								>
 									{isSubmitting ? "Sending..." : "Send reset link"}
 								</Button>
 							</Flex>

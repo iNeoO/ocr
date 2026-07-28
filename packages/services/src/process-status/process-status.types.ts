@@ -1,5 +1,6 @@
 import type { ProcessStatusEvent, ProcessStatusStage } from "@ocr/common";
 
+export { processStatusEventSchema } from "@ocr/common";
 export type { ProcessStatusEvent, ProcessStatusStage };
 
 export type PublishProcessStatusEventInput = {

@@ -6,8 +6,7 @@
   "scripts": {
     "build": "rm -rf dist && tsc",
     "clean-processes": "node --import tsx ./src/clean-processes.ts",
-    "generate-openapi": "node ./src/generate-openapi.ts",
-    "serve-openapi": "node ./src/serve-openapi.ts"
+    "lint": "biome check"
   },
   "keywords": [],
   "author": "",
@@ -17,13 +16,12 @@
     "@aws-sdk/client-s3": "^3.1026.0",
     "@ocr/db": "workspace:*",
     "@ocr/infra": "workspace:*",
-    "@trpc/openapi": "11.13.1-alpha",
-    "drizzle-orm": "^0.45.2",
-    "superjson": "^2.2.6"
+    "drizzle-orm": "^0.45.2"
   },
   "devDependencies": {
+    "@biomejs/biome": "catalog:",
     "@types/node": "catalog:",
-    "typescript": "catalog:",
-    "tsx": "^4.21.0"
+    "tsx": "^4.21.0",
+    "typescript": "catalog:"
   }
 }

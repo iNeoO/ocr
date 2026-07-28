@@ -1,27 +1,26 @@
 import { Button, Callout, Container, Heading } from "@radix-ui/themes";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { type DragEvent, useRef, useState } from "react";
 import { Upload } from "lucide-react";
+import { type DragEvent, useRef, useState } from "react";
 import { ProcessesTable } from "../../components/processes/ProcessesTable";
-import { UploadProcessDialog } from "../../components/processes/UploadProcessDialog";
 import {
 	getFileSizeLabel,
 	isPdfFile,
 } from "../../components/processes/processes.helpers";
+import { UploadProcessDialog } from "../../components/processes/UploadProcessDialog";
 import { useProcessActions } from "../../components/processes/useProcessActions";
 import { useProcessStatusSubscription } from "../../components/processes/useProcessStatusSubscription";
-import { getProcessesByUserId } from "../../libs/api/processes";
+import { processesQueryOptions } from "../../libs/api/processes";
 
 export const Route = createFileRoute("/_auth/processes")({
-	loader: async () => {
-		const processes = await getProcessesByUserId();
-		return { processes };
-	},
+	loader: ({ context }) =>
+		context.queryClient.ensureQueryData(processesQueryOptions()),
 	component: ProcessesPage,
 });
 
 function ProcessesPage() {
-	const { processes } = Route.useLoaderData();
+	const { data: processes } = useSuspenseQuery(processesQueryOptions());
 	useProcessStatusSubscription();
 	const [isUploadOpen, setIsUploadOpen] = useState(false);
 	const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -40,7 +39,9 @@ function ProcessesPage() {
 		requestDelete,
 		confirmDelete,
 	} = useProcessActions();
-	const completedCount = processes.filter((p) => p.status === "completed").length;
+	const completedCount = processes.filter(
+		(p) => p.status === "completed",
+	).length;
 	const runningCount = processes.filter((p) => p.isRunning).length;
 	const failedCount = processes.filter((p) => p.status === "failed").length;
 
@@ -98,18 +99,21 @@ function ProcessesPage() {
 	return (
 		<Container size="4" px="4" py={{ initial: "7", sm: "8" }}>
 			<div className="grid gap-5">
-
 				{/* HEADER — titre + métriques + upload CTA */}
 				<section className="data-panel px-5 py-5 sm:px-6">
 					<div className="grid gap-4">
 						<div className="flex items-start justify-between gap-4">
 							<div className="page-header">
 								<p className="section-kicker m-0">Process monitoring</p>
-								<Heading size="7" className="display-title text-3xl sm:text-4xl">
+								<Heading
+									size="7"
+									className="display-title text-3xl sm:text-4xl"
+								>
 									Document runs
 								</Heading>
 								<p className="m-0 mt-1 max-w-[56ch] text-sm text-(--text-muted)">
-									Track active OCR jobs, review failures and download completed archives.
+									Track active OCR jobs, review failures and download completed
+									archives.
 								</p>
 							</div>
 							<div className="shrink-0 pt-1">
@@ -160,7 +164,13 @@ function ProcessesPage() {
 					</div>
 
 					{actionError ? (
-						<Callout.Root color="red" variant="soft" size="2" mb="4" className="surface-callout">
+						<Callout.Root
+							color="red"
+							variant="soft"
+							size="2"
+							mb="4"
+							className="surface-callout"
+						>
 							<Callout.Text>{actionError}</Callout.Text>
 						</Callout.Root>
 					) : null}
@@ -199,7 +209,6 @@ function ProcessesPage() {
 					}}
 					onUpload={handleUpload}
 				/>
-
 			</div>
 		</Container>
 	);

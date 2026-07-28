@@ -8,6 +8,7 @@ import {
 	Text,
 	TextField,
 } from "@radix-ui/themes";
+import { useQueryClient } from "@tanstack/react-query";
 import {
 	createFileRoute,
 	Link as RouterLink,
@@ -26,11 +27,12 @@ import {
 } from "../helpers/colorChart.helper";
 import {
 	sendVerificationEmail,
+	sessionQueryKey,
 	signInWithEmailAndPassword,
 } from "../libs/api/auth";
 
 const loginSchema = z.object({
-	email: z.string().email("Enter a valid email address."),
+	email: z.email("Enter a valid email address."),
 	password: z.string().min(1, "Enter your password."),
 });
 
@@ -51,18 +53,21 @@ function getErrorMessage(error: unknown) {
 	return error instanceof Error ? error.message : "Login failed";
 }
 
-function mapFieldErrors(error: z.ZodError): LoginFieldErrors {
-	const fields = error.flatten().fieldErrors;
+function mapFieldErrors(
+	error: z.ZodError<z.infer<typeof loginSchema>>,
+): LoginFieldErrors {
+	const { fieldErrors } = z.flattenError(error);
 
 	return {
-		email: fields.email?.[0],
-		password: fields.password?.[0],
+		email: fieldErrors.email?.[0],
+		password: fieldErrors.password?.[0],
 	};
 }
 
 function RouteComponent() {
 	const navigate = useNavigate();
 	const router = useRouter();
+	const queryClient = useQueryClient();
 	const signIn = useServerFn(signInWithEmailAndPassword);
 	const resendVerification = useServerFn(sendVerificationEmail);
 	const [loginEmail, setLoginEmail] = useState("");
@@ -102,6 +107,7 @@ function RouteComponent() {
 
 		try {
 			await signIn({ data: parsed.data });
+			await queryClient.invalidateQueries({ queryKey: sessionQueryKey });
 			await router.invalidate();
 			await navigate({ to: "/" });
 		} catch (error) {
@@ -180,7 +186,12 @@ function RouteComponent() {
 				) : null}
 
 				{resendSuccessMessage ? (
-					<Callout.Root color="green" variant="soft" size="2" className="surface-callout">
+					<Callout.Root
+						color="green"
+						variant="soft"
+						size="2"
+						className="surface-callout"
+					>
 						<Callout.Text>{resendSuccessMessage}</Callout.Text>
 					</Callout.Root>
 				) : null}

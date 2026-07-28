@@ -3,7 +3,11 @@ import { pinoLogger } from "@ocr/infra";
 import { createFileRoute } from "@tanstack/react-router";
 import { getSession } from "../../../libs/api/auth";
 import { buildContentDispositionAttachment } from "../../../libs/http/content-disposition";
-import { downloadServices } from "../../../libs/server/download-services";
+import { container } from "../../../libs/server/container";
+import {
+	countDownload,
+	observeDownloadArchiveSize,
+} from "../../../libs/server/metrics";
 
 export const Route = createFileRoute("/downloads/processes/$id")({
 	server: {
@@ -17,11 +21,12 @@ export const Route = createFileRoute("/downloads/processes/$id")({
 					const session = await getSession();
 
 					if (!session?.user?.id) {
+						countDownload("rejected");
 						return Response.json({ message: "Unauthorized" }, { status: 401 });
 					}
 
 					const archive =
-						await downloadServices.processService.buildProcessMarkdownZip(
+						await container.processService.buildProcessMarkdownZip(
 							params.id,
 							session.user.id,
 						);
@@ -34,6 +39,9 @@ export const Route = createFileRoute("/downloads/processes/$id")({
 						},
 						"Process download ready",
 					);
+
+					countDownload("success");
+					observeDownloadArchiveSize(archive.buffer.length);
 
 					const body = new Blob([new Uint8Array(archive.buffer)], {
 						type: "application/zip",
@@ -52,6 +60,7 @@ export const Route = createFileRoute("/downloads/processes/$id")({
 					});
 				} catch (error) {
 					if (isAPIError(error)) {
+						countDownload("rejected");
 						pinoLogger.warn(
 							{
 								err: error,
@@ -66,6 +75,7 @@ export const Route = createFileRoute("/downloads/processes/$id")({
 						);
 					}
 
+					countDownload("failed");
 					pinoLogger.error(
 						{ err: error, processId: params.id },
 						"Process download failed",

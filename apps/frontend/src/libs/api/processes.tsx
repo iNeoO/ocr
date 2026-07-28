@@ -1,27 +1,54 @@
+import { pinoLogger } from "@ocr/infra";
+import { queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+import { zfd } from "zod-form-data";
 import { parseContentDispositionFilename } from "../http/content-disposition";
+import { container } from "../server/container";
 import { withServerErrorLogging } from "../server/error-handling";
-import { trpc } from "../trpc.server";
+import { toServerError } from "../server/errors";
+import { countOrphanedFileCleanup, countUpload } from "../server/metrics";
+import { requireUser } from "../server/session";
+
+const deleteProcessInput = z.object({
+	processId: z.uuid(),
+});
+
+const uploadFileInput = zfd.formData({
+	file: zfd.file(),
+});
 
 export const getProcessesByUserId = createServerFn({ method: "GET" }).handler(
-	async () => {
-		const { processes } = await withServerErrorLogging(
+	() =>
+		withServerErrorLogging(
 			"processes.getProcesses",
-			() => trpc.processes.getProcesses.query(),
+			async () => {
+				const user = await requireUser();
+				pinoLogger.info({ userId: user.id }, "Get processes for user");
+
+				return container.processService.getProcessesByUserId(user.id);
+			},
 			{ userMessage: "Failed to load processes. Please try again." },
-		);
-		return processes;
-	},
+		),
 );
 
 export const deleteProcess = createServerFn({ method: "POST" })
-	.inputValidator((data: { processId: string }) => data)
+	.inputValidator(deleteProcessInput)
 	.handler(async ({ data }) => {
 		await withServerErrorLogging(
 			"processes.delete",
-			() => trpc.processes.delete.mutate({ processId: data.processId }),
+			async () => {
+				const user = await requireUser();
+				pinoLogger.info(
+					{ userId: user.id, processId: data.processId },
+					"Delete process",
+				);
+
+				await container.processService.deleteProcess(data.processId, user.id);
+			},
 			{ userMessage: "Failed to delete process. Please try again." },
 		);
+
 		return { success: true };
 	});
 
@@ -29,30 +56,78 @@ export type UserProcess = Awaited<
 	ReturnType<typeof getProcessesByUserId>
 >[number];
 
-export const uploadProcessFile = async (file: File) => {
-	const formData = new FormData();
-	formData.append("file", file);
+export const processesQueryKey = ["processes", "list"] as const;
 
-	const response = await fetch("/trpc/files.upload", {
-		method: "POST",
-		body: formData,
-		credentials: "include",
+export const processesQueryOptions = () =>
+	queryOptions({
+		queryKey: processesQueryKey,
+		queryFn: () => getProcessesByUserId(),
 	});
 
-	const payload = (await response.json().catch(() => null)) as
-		| {
-				error?: {
-					message?: string;
-				};
-		  }
-		| null;
+/** The only 429 an upload can produce is the per-user daily process limit. */
+const TOO_MANY_REQUESTS = 429;
 
-	if (!response.ok || payload?.error?.message) {
-		throw new Error(payload?.error?.message ?? "Upload failed.");
+/**
+ * Compensates a failed process creation by removing the object that was
+ * already pushed to S3. Never throws: the caller is on its way to rethrowing
+ * the error that caused the compensation, and a cleanup failure must not
+ * replace it — that would hide the real reason behind an S3 message. It is
+ * reported through `ocr_frontend_orphaned_file_cleanups_total{result="failed"}`
+ * instead, which is the only signal that the bucket now holds an orphan.
+ */
+const cleanUpOrphanedFile = async (fileId: string, userId: string) => {
+	try {
+		await container.filesService.deleteFiles([fileId]);
+		countOrphanedFileCleanup("succeeded");
+	} catch (error) {
+		countOrphanedFileCleanup("failed");
+		pinoLogger.error(
+			{ err: error, fileId, userId },
+			"Failed to remove the orphaned file of a failed process creation",
+		);
 	}
-
-	return payload;
 };
+
+export const uploadProcessFile = createServerFn({ method: "POST" })
+	.inputValidator(uploadFileInput)
+	.handler(({ data }) =>
+		withServerErrorLogging(
+			"files.upload",
+			async () => {
+				const user = await requireUser();
+				pinoLogger.info({ userId: user.id }, "Upload file");
+
+				try {
+					await container.processService.assertDailyProcessLimit(user.id);
+
+					const file = await container.filesService.uploadFile(data.file);
+
+					try {
+						const process = await container.processService.createProcess({
+							fileId: file.id,
+							userId: user.id,
+						});
+
+						countUpload("accepted");
+
+						return { process };
+					} catch (error) {
+						// Without this, a failed creation leaves an orphan in S3.
+						await cleanUpOrphanedFile(file.id, user.id);
+						throw error;
+					}
+				} catch (error) {
+					countUpload(
+						toServerError(error).statusCode === TOO_MANY_REQUESTS
+							? "rejected_daily_limit"
+							: "failed",
+					);
+					throw error;
+				}
+			},
+			{ userMessage: "Upload failed. Please try again." },
+		),
+	);
 
 export const downloadProcessArchive = async (processId: string) => {
 	const response = await fetch(`/downloads/processes/${processId}`, {
@@ -61,9 +136,9 @@ export const downloadProcessArchive = async (processId: string) => {
 	});
 
 	if (!response.ok) {
-		const payload = (await response.json().catch(() => null)) as
-			| { message?: string }
-			| null;
+		const payload = (await response.json().catch(() => null)) as {
+			message?: string;
+		} | null;
 		throw new Error(payload?.message ?? "Download failed.");
 	}
 

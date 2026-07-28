@@ -39,9 +39,17 @@
       "types": "./src/files/files.service.ts",
       "default": "./dist/files/files.service.js"
     },
+    "./mail/mail.service": {
+      "types": "./src/mail/mail.service.ts",
+      "default": "./dist/mail/mail.service.js"
+    },
     "./process/process.service": {
       "types": "./src/process/process.service.ts",
       "default": "./dist/process/process.service.js"
+    },
+    "./process-status/process-status-pubsub.service": {
+      "types": "./src/process-status/process-status-pubsub.service.ts",
+      "default": "./dist/process-status/process-status-pubsub.service.js"
     }
   },
   "devDependencies": {

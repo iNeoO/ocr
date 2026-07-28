@@ -1,18 +1,25 @@
-export type ProcessStatusStage =
-	| "split_pdf"
-	| "transcribe_page"
-	| "post_process_page"
-	| "process_completed"
-	| "process_failed";
+import { z } from "zod";
 
-export type ProcessStatusEvent = {
-	userId: string;
-	processId: string;
-	processName: string;
-	sourceFileName: string;
-	stage: ProcessStatusStage;
-	status: "success" | "failed";
-	durationMs: number;
-	message: string;
-	occurredAt: string;
-};
+export const processStatusStageSchema = z.enum([
+	"split_pdf",
+	"transcribe_page",
+	"post_process_page",
+	"process_completed",
+	"process_failed",
+]);
+
+export type ProcessStatusStage = z.infer<typeof processStatusStageSchema>;
+
+export const processStatusEventSchema = z.object({
+	userId: z.string(),
+	processId: z.string(),
+	processName: z.string(),
+	sourceFileName: z.string(),
+	stage: processStatusStageSchema,
+	status: z.enum(["success", "failed"]),
+	durationMs: z.number(),
+	message: z.string(),
+	occurredAt: z.string(),
+});
+
+export type ProcessStatusEvent = z.infer<typeof processStatusEventSchema>;

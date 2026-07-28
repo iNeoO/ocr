@@ -1,6 +1,6 @@
 import { Badge } from "@radix-ui/themes";
-import type { UserProcess } from "../../libs/api/processes";
 import { getProcessStatusColor } from "../../helpers/colorChart.helper";
+import type { UserProcess } from "../../libs/api/processes";
 import { formatProcessStatus } from "./processes.helpers";
 
 type ProcessStatusBadgeProps = {

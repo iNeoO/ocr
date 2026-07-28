@@ -8,7 +8,6 @@
 	"files": {
 		"ignoreUnknown": false,
 		"includes": [
-			"./apps/backend/src/**/*",
 			"./apps/frontend/src/**/*",
 			"./apps/frontend/vite.config.ts",
 			"./db/src/**/*",
@@ -16,7 +15,10 @@
 			"./packages/common/src/**/*",
 			"./packages/infra/src/**/*",
 			"./packages/services/src/**/*",
-			"./workers/*/src/**/*"
+			"./scripts/src/**/*",
+			"./workers/*/src/**/*",
+			"!**/routeTree.gen.ts",
+			"!**/styles.css"
 		]
 	},
 	"formatter": {

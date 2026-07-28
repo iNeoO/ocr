@@ -1,4 +1,5 @@
 import { Theme } from "@radix-ui/themes";
+import type { QueryClient } from "@tanstack/react-query";
 import {
 	createRootRouteWithContext,
 	type ErrorComponentProps,
@@ -6,27 +7,46 @@ import {
 	Link,
 	Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type CSSProperties } from "react";
+import { type CSSProperties, useEffect } from "react";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
 import { ToastProvider } from "../components/toast/ToastProvider";
-import { type AuthSession, getSession } from "../libs/api/auth";
+import {
+	type AuthSession,
+	getSession,
+	sessionQueryKey,
+} from "../libs/api/auth";
 
 import appCss from "../styles.css?url";
 
 interface RouterContext {
 	session: AuthSession | null;
+	queryClient: QueryClient;
 }
 
 export const Route = createRootRouteWithContext<RouterContext>()({
-	beforeLoad: async () => {
+	beforeLoad: async ({ context }) => {
 		try {
 			const session = await getSession();
+			context.queryClient.setQueryData(sessionQueryKey, session);
 			return {
 				session,
 			};
 		} catch (error) {
-			console.error("Failed to load session", error);
+			// Fail closed: a session we cannot read is a session we do not trust, so
+			// the app renders logged out. That means a transient Redis or Postgres
+			// blip looks like a sign-out to the user — deliberate, but it has to stay
+			// visible in the logs.
+			//
+			// `beforeLoad` runs on both sides. On the server the cause is already an
+			// `op: auth.getSession` error line from `withServerErrorLogging`, and
+			// `console` would only add an unstructured duplicate to the same pino
+			// stream. The browser has no such log, so keep the trace there.
+			if (typeof document !== "undefined") {
+				console.error("Failed to load session", error);
+			}
+
+			context.queryClient.setQueryData(sessionQueryKey, null);
 			return {
 				session: null,
 			};

@@ -1,9 +1,11 @@
-import type { ProcessStatusEvent } from "@ocr/common";
-import { useRouter } from "@tanstack/react-router";
+import { type ProcessStatusEvent, processStatusEventSchema } from "@ocr/common";
+import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
-import { trpc } from "../../libs/trpc";
+import { processesQueryKey } from "../../libs/api/processes";
+import { getProcessStatusEventKey } from "../../libs/server/sse";
 import { useToast } from "../toast/ToastProvider";
 
+const PROCESS_STATUS_STREAM_URL = "/api/processes/status";
 const PROCESS_TABLE_REFRESH_DEBOUNCE_MS = 750;
 const SEEN_EVENT_KEYS_LIMIT = 250;
 
@@ -28,7 +30,7 @@ const formatProcessStatusToast = (event: ProcessStatusEvent) => ({
 });
 
 export function useProcessStatusSubscription() {
-	const router = useRouter();
+	const queryClient = useQueryClient();
 	const { pushToast } = useToast();
 	const seenEventsRef = useRef<Set<string>>(new Set());
 	const seenEventKeysOrderRef = useRef<string[]>([]);
@@ -42,41 +44,60 @@ export function useProcessStatusSubscription() {
 
 			invalidateTimerRef.current = setTimeout(() => {
 				invalidateTimerRef.current = null;
-				void router.invalidate();
+				void queryClient.invalidateQueries({ queryKey: processesQueryKey });
 			}, PROCESS_TABLE_REFRESH_DEBOUNCE_MS);
 		};
 
-		const subscription = trpc.processes.status.subscribe(undefined, {
-			onData(event: ProcessStatusEvent) {
-				const dedupeKey = `${event.processId}:${event.stage}:${event.occurredAt}`;
-				if (seenEventsRef.current.has(dedupeKey)) {
-					return;
+		const eventSource = new EventSource(PROCESS_STATUS_STREAM_URL);
+
+		eventSource.onmessage = (message) => {
+			let payload: unknown;
+
+			try {
+				payload = JSON.parse(message.data);
+			} catch (error) {
+				console.error("Malformed process status event", error);
+				return;
+			}
+
+			const parsedEvent = processStatusEventSchema.safeParse(payload);
+			if (!parsedEvent.success) {
+				console.error("Unexpected process status event", parsedEvent.error);
+				return;
+			}
+
+			const event = parsedEvent.data;
+			const dedupeKey = getProcessStatusEventKey(event);
+			if (seenEventsRef.current.has(dedupeKey)) {
+				return;
+			}
+
+			seenEventsRef.current.add(dedupeKey);
+			seenEventKeysOrderRef.current.push(dedupeKey);
+
+			if (seenEventKeysOrderRef.current.length > SEEN_EVENT_KEYS_LIMIT) {
+				const expiredKey = seenEventKeysOrderRef.current.shift();
+				if (expiredKey) {
+					seenEventsRef.current.delete(expiredKey);
 				}
+			}
 
-				seenEventsRef.current.add(dedupeKey);
-				seenEventKeysOrderRef.current.push(dedupeKey);
+			pushToast(formatProcessStatusToast(event));
+			scheduleTableRefresh();
+		};
 
-				if (seenEventKeysOrderRef.current.length > SEEN_EVENT_KEYS_LIMIT) {
-					const expiredKey = seenEventKeysOrderRef.current.shift();
-					if (expiredKey) {
-						seenEventsRef.current.delete(expiredKey);
-					}
-				}
-
-				pushToast(formatProcessStatusToast(event));
-				scheduleTableRefresh();
-			},
-			onError(error) {
-				console.error("Process status subscription failed", error);
-			},
-		});
+		eventSource.onerror = () => {
+			if (eventSource.readyState === EventSource.CLOSED) {
+				console.error("Process status stream closed");
+			}
+		};
 
 		return () => {
 			if (invalidateTimerRef.current) {
 				clearTimeout(invalidateTimerRef.current);
 			}
 
-			subscription.unsubscribe();
+			eventSource.close();
 		};
-	}, [pushToast, router]);
+	}, [pushToast, queryClient]);
 }

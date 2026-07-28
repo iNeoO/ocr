@@ -46,7 +46,7 @@ function RouteComponent() {
 					error instanceof Error ? error.message : "Validation failed",
 				);
 			});
-	}, [token, validateEmail]);
+	}, [token, callbackURL, validateEmail]);
 
 	return (
 		<AuthShell
@@ -55,7 +55,12 @@ function RouteComponent() {
 			description="Validation stays on the existing server flow, but the screen now reads like part of the same command deck."
 		>
 			{!token ? (
-				<Callout.Root color="amber" variant="soft" size="2" className="surface-callout">
+				<Callout.Root
+					color="amber"
+					variant="soft"
+					size="2"
+					className="surface-callout"
+				>
 					<Callout.Icon>
 						<AlertTriangle size={16} />
 					</Callout.Icon>
@@ -66,7 +71,12 @@ function RouteComponent() {
 			) : null}
 
 			{status === "loading" ? (
-				<Callout.Root color="blue" variant="soft" size="2" className="surface-callout">
+				<Callout.Root
+					color="blue"
+					variant="soft"
+					size="2"
+					className="surface-callout"
+				>
 					<Callout.Icon>
 						<Info size={16} />
 					</Callout.Icon>
@@ -75,7 +85,12 @@ function RouteComponent() {
 			) : null}
 
 			{status === "success" ? (
-				<Callout.Root color="green" variant="soft" size="2" className="surface-callout">
+				<Callout.Root
+					color="green"
+					variant="soft"
+					size="2"
+					className="surface-callout"
+				>
 					<Callout.Icon>
 						<CheckCircle2 size={16} />
 					</Callout.Icon>
@@ -95,7 +110,12 @@ function RouteComponent() {
 			) : null}
 
 			{status === "error" ? (
-				<Callout.Root color="red" variant="soft" size="2" className="surface-callout">
+				<Callout.Root
+					color="red"
+					variant="soft"
+					size="2"
+					className="surface-callout"
+				>
 					<Callout.Icon>
 						<AlertTriangle size={16} />
 					</Callout.Icon>

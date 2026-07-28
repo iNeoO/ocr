@@ -1,117 +1,168 @@
+import { queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+import { container } from "../server/container";
 import { withServerErrorLogging } from "../server/error-handling";
-import { trpc } from "../trpc.server";
+import {
+	getRequestHeadersAsHeaders,
+	mergeSetCookieHeadersIntoRequestHeaders,
+	setResponseCookies,
+} from "../server/headers";
+
+const signInInput = z.object({
+	email: z.email(),
+	password: z.string().min(1),
+	callbackURL: z.string().optional(),
+	rememberMe: z.boolean().optional(),
+});
+
+const signUpInput = z.object({
+	name: z.string().min(1),
+	email: z.email(),
+	password: z.string().min(1),
+	image: z.string().optional(),
+	callbackURL: z.string().optional(),
+	rememberMe: z.boolean().optional(),
+});
+
+const requestPasswordResetInput = z.object({
+	email: z.email(),
+	redirectTo: z.string().optional(),
+});
+
+const resetPasswordInput = z.object({
+	newPassword: z.string().min(1),
+	token: z.string().optional(),
+});
+
+const verifyEmailInput = z.object({
+	token: z.string().min(1),
+	callbackURL: z.string().optional(),
+});
+
+const sendVerificationEmailInput = z.object({
+	email: z.email(),
+	callbackURL: z.string().optional(),
+});
 
 export const signInWithEmailAndPassword = createServerFn({ method: "POST" })
-	.inputValidator(
-		(data: {
-			email: string;
-			password: string;
-			callbackURL?: string;
-			rememberMe?: boolean;
-		}) => data,
-	)
-	.handler(async ({ data }) => {
-		const res = await withServerErrorLogging(
-			"auth.signInWithEmailAndPassword",
-			() =>
-				trpc.auth.signInWithEmailAndPassword.mutate({
+	.inputValidator(signInInput)
+	.handler(({ data }) =>
+		withServerErrorLogging("auth.signInWithEmailAndPassword", async () => {
+			const { headers } =
+				await container.authService.signInWithEmailAndPassword({
 					email: data.email,
 					password: data.password,
 					callbackURL: data.callbackURL,
 					rememberMe: data.rememberMe,
-				}),
-		);
+					headers: getRequestHeadersAsHeaders(),
+				});
 
-		return res;
-	});
+			setResponseCookies(headers);
 
-export const signOut = createServerFn({ method: "POST" }).handler(async () => {
-	await withServerErrorLogging("auth.signOut", () => trpc.auth.signOut.mutate(), {
-		userMessage: "Sign out failed. Please try again.",
-	});
-});
-
-export type AuthSession = Awaited<ReturnType<typeof getSession>>;
-
-export const getSession = createServerFn({ method: "GET" }).handler(
-	async () => {
-		const session = await withServerErrorLogging("auth.getSession", () =>
-			trpc.auth.getSession.query(),
-		);
-
-		return session;
-	},
-);
+			return container.authService.getSession({
+				headers: mergeSetCookieHeadersIntoRequestHeaders(headers),
+			});
+		}),
+	);
 
 export const signUpWithEmailAndPassword = createServerFn({ method: "POST" })
-	.inputValidator(
-		(data: {
-			email: string;
-			password: string;
-			name: string;
-			image?: string;
-			callbackURL?: string;
-			rememberMe?: boolean;
-		}) => data,
-	)
-	.handler(async ({ data }) => {
-		const res = await withServerErrorLogging(
-			"auth.signUpWithEmailAndPassword",
-			() =>
-				trpc.auth.signUpWithEmailAndPassword.mutate({
+	.inputValidator(signUpInput)
+	.handler(({ data }) =>
+		withServerErrorLogging("auth.signUpWithEmailAndPassword", async () => {
+			const { headers } =
+				await container.authService.signUpWithEmailAndPassword({
 					name: data.name,
 					email: data.email,
 					password: data.password,
 					image: data.image,
 					callbackURL: data.callbackURL,
 					rememberMe: data.rememberMe,
-				}),
-		);
+					headers: getRequestHeadersAsHeaders(),
+				});
 
-		return res;
+			setResponseCookies(headers);
+
+			return container.authService.getSession({
+				headers: mergeSetCookieHeadersIntoRequestHeaders(headers),
+			});
+		}),
+	);
+
+export const signOut = createServerFn({ method: "POST" }).handler(async () => {
+	await withServerErrorLogging(
+		"auth.signOut",
+		async () => {
+			const { headers, response } = await container.authService.signOut({
+				headers: getRequestHeadersAsHeaders(),
+			});
+
+			setResponseCookies(headers);
+
+			return response;
+		},
+		{ userMessage: "Sign out failed. Please try again." },
+	);
+});
+
+export const getSession = createServerFn({ method: "GET" }).handler(() =>
+	withServerErrorLogging("auth.getSession", () =>
+		container.authService.getSession({
+			headers: getRequestHeadersAsHeaders(),
+		}),
+	),
+);
+
+export type AuthSession = Awaited<ReturnType<typeof getSession>>;
+
+export const sessionQueryKey = ["auth", "session"] as const;
+
+export const sessionQueryOptions = () =>
+	queryOptions({
+		queryKey: sessionQueryKey,
+		queryFn: () => getSession(),
 	});
 
 export const requestPasswordReset = createServerFn({ method: "POST" })
-	.inputValidator((data: { email: string; redirectTo?: string }) => data)
-	.handler(async ({ data }) => {
-		return withServerErrorLogging("auth.requestPasswordReset", () =>
-			trpc.auth.requestPasswordReset.mutate({
+	.inputValidator(requestPasswordResetInput)
+	.handler(({ data }) =>
+		withServerErrorLogging("auth.requestPasswordReset", () =>
+			container.authService.requestPasswordReset({
 				email: data.email,
 				redirectTo: data.redirectTo,
 			}),
-		);
-	});
+		),
+	);
 
 export const resetPassword = createServerFn({ method: "POST" })
-	.inputValidator((data: { newPassword: string; token?: string }) => data)
-	.handler(async ({ data }) => {
-		return withServerErrorLogging("auth.resetPassword", () =>
-			trpc.auth.resetPassword.mutate({
+	.inputValidator(resetPasswordInput)
+	.handler(({ data }) =>
+		withServerErrorLogging("auth.resetPassword", () =>
+			container.authService.resetPassword({
 				newPassword: data.newPassword,
 				token: data.token,
 			}),
-		);
-	});
+		),
+	);
 
 export const verifyEmail = createServerFn({ method: "POST" })
-	.inputValidator((data: { token: string; callbackURL?: string }) => data)
-	.handler(async ({ data }) => {
-		return withServerErrorLogging("auth.verifyEmail", () =>
-			trpc.auth.verifyEmail.mutate({
+	.inputValidator(verifyEmailInput)
+	.handler(({ data }) =>
+		withServerErrorLogging("auth.verifyEmail", () =>
+			container.authService.verifyEmail({
 				token: data.token,
 				callbackURL: data.callbackURL,
 			}),
-		);
-	});
+		),
+	);
 
 export const sendVerificationEmail = createServerFn({ method: "POST" })
-	.inputValidator((data: { email: string; callbackURL?: string }) => data)
-	.handler(async ({ data }) => {
-		return withServerErrorLogging("auth.sendVerificationEmail", () =>
-			trpc.auth.sendVerificationEmail.mutate({
+	.inputValidator(sendVerificationEmailInput)
+	.handler(({ data }) =>
+		withServerErrorLogging("auth.sendVerificationEmail", () =>
+			container.authService.sendVerificationEmail({
 				email: data.email,
 				callbackURL: data.callbackURL,
 			}),
-		);
-	});
+		),
+	);

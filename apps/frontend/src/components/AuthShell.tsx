@@ -37,7 +37,11 @@ export default function AuthShell({
 				<Box>
 					<Link asChild size="2" underline="hover" color="gray">
 						<RouterLink to="/">
-							<Flex align="center" gap="2" className="mono-label text-[0.68rem] tracking-[0.16em]">
+							<Flex
+								align="center"
+								gap="2"
+								className="mono-label text-[0.68rem] tracking-[0.16em]"
+							>
 								<ArrowLeft size={16} />
 								Back to command deck
 							</Flex>
@@ -53,7 +57,10 @@ export default function AuthShell({
 									<Text size="1" weight="bold" className="section-kicker">
 										{eyebrow}
 									</Text>
-									<Heading size="8" className="display-title auth-title text-5xl sm:text-6xl">
+									<Heading
+										size="8"
+										className="display-title auth-title text-5xl sm:text-6xl"
+									>
 										{title}
 									</Heading>
 									<Text size="3" className="eyebrow-copy">
@@ -71,7 +78,9 @@ export default function AuthShell({
 								<div>
 									<div className="inline-flex items-center gap-3 rounded-full border border-(--line-strong) bg-(--accent-soft) px-3 py-2">
 										<span className="h-2.5 w-2.5 rounded-full bg-[linear-gradient(135deg,var(--accent),#ffe1c5)] shadow-[0_0_18px_rgba(249,115,22,0.65)]" />
-										<span className="mono-label text-[0.7rem] tracking-[0.22em]">OCR // deck</span>
+										<span className="mono-label text-[0.7rem] tracking-[0.22em]">
+											{"OCR // deck"}
+										</span>
 									</div>
 								</div>
 
@@ -89,7 +98,11 @@ export default function AuthShell({
 												<span
 													className="status-pill shrink-0"
 													data-status={item.status}
-													style={{ minHeight: "auto", padding: "0.18rem 0.5rem", fontSize: "0.62rem" }}
+													style={{
+														minHeight: "auto",
+														padding: "0.18rem 0.5rem",
+														fontSize: "0.62rem",
+													}}
 												>
 													<span className="status-dot" />
 													{item.status}

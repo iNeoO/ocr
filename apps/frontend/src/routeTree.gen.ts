@@ -20,6 +20,7 @@ import { Route as AuthRouteRouteImport } from './routes/_auth/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthProcessesRouteImport } from './routes/_auth/processes'
 import { Route as DownloadsProcessesIdRouteImport } from './routes/downloads/processes/$id'
+import { Route as ApiProcessesStatusRouteImport } from './routes/api/processes/status'
 
 const ValidateEmailRoute = ValidateEmailRouteImport.update({
   id: '/validate-email',
@@ -75,6 +76,11 @@ const DownloadsProcessesIdRoute = DownloadsProcessesIdRouteImport.update({
   path: '/downloads/processes/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiProcessesStatusRoute = ApiProcessesStatusRouteImport.update({
+  id: '/api/processes/status',
+  path: '/api/processes/status',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -86,6 +92,7 @@ export interface FileRoutesByFullPath {
   '/terms-and-conditions': typeof TermsAndConditionsRoute
   '/validate-email': typeof ValidateEmailRoute
   '/processes': typeof AuthProcessesRoute
+  '/api/processes/status': typeof ApiProcessesStatusRoute
   '/downloads/processes/$id': typeof DownloadsProcessesIdRoute
 }
 export interface FileRoutesByTo {
@@ -98,6 +105,7 @@ export interface FileRoutesByTo {
   '/terms-and-conditions': typeof TermsAndConditionsRoute
   '/validate-email': typeof ValidateEmailRoute
   '/processes': typeof AuthProcessesRoute
+  '/api/processes/status': typeof ApiProcessesStatusRoute
   '/downloads/processes/$id': typeof DownloadsProcessesIdRoute
 }
 export interface FileRoutesById {
@@ -112,6 +120,7 @@ export interface FileRoutesById {
   '/terms-and-conditions': typeof TermsAndConditionsRoute
   '/validate-email': typeof ValidateEmailRoute
   '/_auth/processes': typeof AuthProcessesRoute
+  '/api/processes/status': typeof ApiProcessesStatusRoute
   '/downloads/processes/$id': typeof DownloadsProcessesIdRoute
 }
 export interface FileRouteTypes {
@@ -126,6 +135,7 @@ export interface FileRouteTypes {
     | '/terms-and-conditions'
     | '/validate-email'
     | '/processes'
+    | '/api/processes/status'
     | '/downloads/processes/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -138,6 +148,7 @@ export interface FileRouteTypes {
     | '/terms-and-conditions'
     | '/validate-email'
     | '/processes'
+    | '/api/processes/status'
     | '/downloads/processes/$id'
   id:
     | '__root__'
@@ -151,6 +162,7 @@ export interface FileRouteTypes {
     | '/terms-and-conditions'
     | '/validate-email'
     | '/_auth/processes'
+    | '/api/processes/status'
     | '/downloads/processes/$id'
   fileRoutesById: FileRoutesById
 }
@@ -164,6 +176,7 @@ export interface RootRouteChildren {
   SignUpRoute: typeof SignUpRoute
   TermsAndConditionsRoute: typeof TermsAndConditionsRoute
   ValidateEmailRoute: typeof ValidateEmailRoute
+  ApiProcessesStatusRoute: typeof ApiProcessesStatusRoute
   DownloadsProcessesIdRoute: typeof DownloadsProcessesIdRoute
 }
 
@@ -246,6 +259,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DownloadsProcessesIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/processes/status': {
+      id: '/api/processes/status'
+      path: '/api/processes/status'
+      fullPath: '/api/processes/status'
+      preLoaderRoute: typeof ApiProcessesStatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -271,6 +291,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignUpRoute: SignUpRoute,
   TermsAndConditionsRoute: TermsAndConditionsRoute,
   ValidateEmailRoute: ValidateEmailRoute,
+  ApiProcessesStatusRoute: ApiProcessesStatusRoute,
   DownloadsProcessesIdRoute: DownloadsProcessesIdRoute,
 }
 export const routeTree = rootRouteImport

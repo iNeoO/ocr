@@ -1,4 +1,5 @@
 import { Box, Button, Callout, Flex, Text, TextField } from "@radix-ui/themes";
+import { useQueryClient } from "@tanstack/react-query";
 import {
 	createFileRoute,
 	redirect,
@@ -10,11 +11,11 @@ import { Lock, Mail, User } from "lucide-react";
 import { useId, useState } from "react";
 import { z } from "zod";
 import AuthShell from "../components/AuthShell";
-import { signUpWithEmailAndPassword } from "../libs/api/auth";
+import { sessionQueryKey, signUpWithEmailAndPassword } from "../libs/api/auth";
 
 const signUpSchema = z.object({
 	name: z.string().min(1, "Enter your name."),
-	email: z.string().email("Enter a valid email address."),
+	email: z.email("Enter a valid email address."),
 	password: z.string().min(8, "Password must be at least 8 characters."),
 });
 
@@ -31,19 +32,22 @@ export const Route = createFileRoute("/sign-up")({
 	component: RouteComponent,
 });
 
-function mapFieldErrors(error: z.ZodError): SignUpFieldErrors {
-	const fields = error.flatten().fieldErrors;
+function mapFieldErrors(
+	error: z.ZodError<z.infer<typeof signUpSchema>>,
+): SignUpFieldErrors {
+	const { fieldErrors } = z.flattenError(error);
 
 	return {
-		name: fields.name?.[0],
-		email: fields.email?.[0],
-		password: fields.password?.[0],
+		name: fieldErrors.name?.[0],
+		email: fieldErrors.email?.[0],
+		password: fieldErrors.password?.[0],
 	};
 }
 
 function RouteComponent() {
 	const navigate = useNavigate();
 	const router = useRouter();
+	const queryClient = useQueryClient();
 	const signUp = useServerFn(signUpWithEmailAndPassword);
 	const [signupEmail, setSignupEmail] = useState("");
 	const [signupPassword, setSignupPassword] = useState("");
@@ -75,6 +79,7 @@ function RouteComponent() {
 
 		try {
 			await signUp({ data: parsed.data });
+			await queryClient.invalidateQueries({ queryKey: sessionQueryKey });
 			await router.invalidate();
 			await navigate({ to: "/" });
 		} catch (error) {
@@ -92,7 +97,12 @@ function RouteComponent() {
 		>
 			<Flex direction="column" gap="4">
 				{errorMessage ? (
-					<Callout.Root color="red" variant="soft" size="2" className="surface-callout">
+					<Callout.Root
+						color="red"
+						variant="soft"
+						size="2"
+						className="surface-callout"
+					>
 						<Callout.Text>{errorMessage}</Callout.Text>
 					</Callout.Root>
 				) : null}

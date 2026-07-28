@@ -11,7 +11,6 @@ export const envSchema = z
 		NODE_ENV: z
 			.enum(["development", "test", "production"])
 			.default("development"),
-		BACKEND_PORT: z.coerce.number(),
 		PG_OCR_DB: z.string(),
 		PG_OCR_USER: z.string(),
 		PG_OCR_PASSWORD: z.string(),
