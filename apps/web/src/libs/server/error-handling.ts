@@ -11,7 +11,7 @@ const DEFAULT_USER_MESSAGE = "Operation failed. Please try again.";
  * `trpc_requests_total` / `trpc_request_duration_seconds`.
  *
  * The timing covers the handler body only, not request parsing or response
- * serialization; `ocr_frontend_http_request_duration_seconds{route="/_serverFn"}`
+ * serialization; `ocr_web_http_request_duration_seconds{route="/_serverFn"}`
  * covers the wire-level view.
  */
 export async function withServerErrorLogging<T>(

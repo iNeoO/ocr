@@ -15,7 +15,7 @@ WORKDIR /app
 FROM base AS deps
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY apps/frontend/package.json apps/frontend/package.json
+COPY apps/web/package.json apps/web/package.json
 COPY db/package.json db/package.json
 COPY packages/common/package.json packages/common/package.json
 COPY packages/infra/package.json packages/infra/package.json
@@ -29,7 +29,7 @@ RUN pnpm install --frozen-lockfile
 
 FROM deps AS builder
 
-COPY apps/frontend apps/frontend
+COPY apps/web apps/web
 COPY db db
 COPY packages/common packages/common
 COPY packages/infra packages/infra
@@ -40,7 +40,7 @@ COPY workers/split-pdf-worker workers/split-pdf-worker
 COPY workers/transcribe-jpg-worker workers/transcribe-jpg-worker
 
 RUN pnpm build:runtime && \
-    pnpm --filter @ocr/frontend build
+    pnpm --filter @ocr/web build
 
 FROM base AS server
 
@@ -51,8 +51,8 @@ COPY --chown=node:node --from=deps /app/package.json ./package.json
 COPY --chown=node:node --from=deps /app/pnpm-lock.yaml ./pnpm-lock.yaml
 COPY --chown=node:node --from=deps /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
 
-COPY --chown=node:node --from=builder /app/apps/frontend apps/frontend
-# The workspace packages ship with the image: the frontend server resolves them
+COPY --chown=node:node --from=builder /app/apps/web apps/web
+# The workspace packages ship with the image: the web server resolves them
 # at runtime, and the `db-migrate` compose service reuses this image to run
 # `pnpm --filter @ocr/db migrate`.
 COPY --chown=node:node --from=builder /app/db db
@@ -67,6 +67,6 @@ USER node
 
 EXPOSE 3010
 
-WORKDIR /app/apps/frontend
+WORKDIR /app/apps/web
 
 CMD ["pnpm", "preview", "--host", "0.0.0.0", "--port", "3010"]

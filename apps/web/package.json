@@ -1,5 +1,5 @@
 {
-  "name": "@ocr/frontend",
+  "name": "@ocr/web",
   "private": true,
   "type": "module",
   "imports": {

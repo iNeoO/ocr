@@ -16,7 +16,7 @@ Production app: [ocr.tuturu.io](https://ocr.tuturu.io)
 
 The repository is a `pnpm` monorepo split into a few clear areas:
 
-- `apps/frontend`: the single application server — React, Vite, TanStack Start / Router / Query UI **and** the server layer (server functions and route handlers) that calls the business services in memory
+- `apps/web`: the single application server — React, Vite, TanStack Start / Router / Query UI **and** the server layer (server functions and route handlers) that calls the business services in memory
 - `workers/*`: queue-driven pipeline workers for splitting, transcription, post-processing, and cleanup
 - `packages/*`: shared business services, infra utilities, and common types
 - `db`: Drizzle schema, migrations, and database tooling
@@ -36,7 +36,7 @@ Redis, S3, and RabbitMQ access directly.
 
 ## End-To-End Flow
 
-1. A user uploads a PDF from the frontend.
+1. A user uploads a PDF from the web app.
 2. The Start server creates a process and stores the source file.
 3. A split worker turns the PDF into page images.
 4. OCR workers transcribe the pages.
@@ -56,7 +56,7 @@ Prepare environment variables from one of the provided templates:
 - [`.env.exemple`](./.env.exemple) for local development
 - [`.env.docker.example`](./.env.docker.example) for Docker-based runs
 
-`FRONTEND_ALLOWED_HOSTS` can be used to add extra hostnames accepted by `vite preview` in the frontend container. Use a comma-separated list when internal probes or reverse proxies access the frontend with hostnames that differ from `localhost` or `BETTER_AUTH_URL`.
+`WEB_ALLOWED_HOSTS` can be used to add extra hostnames accepted by `vite preview` in the web container. Use a comma-separated list when internal probes or reverse proxies access the web app with hostnames that differ from `localhost` or `BETTER_AUTH_URL`.
 
 Start local infrastructure:
 
@@ -80,7 +80,7 @@ Run the full app in development mode:
 pnpm dev
 ```
 
-`pnpm dev` first builds the runtime packages, then starts the frontend server and all workers concurrently.
+`pnpm dev` first builds the runtime packages, then starts the web server and all workers concurrently.
 
 ## Useful Commands
 
@@ -107,7 +107,7 @@ docker compose --env-file .env.docker \
 
 Main exposed production ports:
 
-- Frontend / TanStack Start application server: `3010`
+- Web / TanStack Start application server: `3010`
 - PostgreSQL: `5436`
 
 Production Redis, RabbitMQ, and object storage are provided by the shared stack
@@ -125,17 +125,18 @@ Set `REDIS_OCR_USERNAME=ocr`, copy the dedicated `REDIS_OCR_PASSWORD` from the
 secret vault, and configure `AMQP_URL` with the existing OCR RabbitMQ user and
 `/ocr` vhost in `.env.docker`.
 
-The reverse proxy should target only the frontend container on `127.0.0.1:3010`.
+The reverse proxy should target only the web container on `127.0.0.1:3010`.
 There is no backend upstream anymore. Keep `BETTER_AUTH_URL` aligned with the
 public HTTPS origin and add any internal proxy/probe hostnames to
-`FRONTEND_ALLOWED_HOSTS` as a comma-separated list.
+`WEB_ALLOWED_HOSTS` as a comma-separated list.
 
 ## Observability And Docs
 
 - Project notes: [`doc/rfc.md`](./doc/rfc.md)
 
-The frontend exposes `/metrics`; if it is served through `vite preview`, make
-sure the probe hostname is allowed through `FRONTEND_ALLOWED_HOSTS` when needed.
+The web app exposes `/metrics` under the `ocr_web_` prefix; if it is served
+through `vite preview`, make sure the probe hostname is allowed through
+`WEB_ALLOWED_HOSTS` when needed.
 Monitoring dashboards and scrape configuration are handled separately.
 
 ## License

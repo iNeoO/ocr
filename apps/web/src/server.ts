@@ -35,7 +35,7 @@ const startHandler = createStartHandler(defaultStreamHandler);
  *
  * For `/api/processes/status` the duration is time-to-response, not the
  * lifetime of the stream — the handler returns as soon as the SSE body is
- * wired up. Stream lifetime is tracked by `ocr_frontend_sse_streams_active`.
+ * wired up. Stream lifetime is tracked by `ocr_web_sse_streams_active`.
  */
 const fetch: ServerEntry["fetch"] = async (request, opts) => {
 	const startedAt = performance.now();

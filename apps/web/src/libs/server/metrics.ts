@@ -6,7 +6,7 @@ import {
 	Registry,
 } from "prom-client";
 
-const METRIC_PREFIX = "ocr_frontend_";
+const METRIC_PREFIX = "ocr_web_";
 
 /**
  * Route label values, kept to a fixed set on purpose.

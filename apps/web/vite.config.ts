@@ -99,10 +99,7 @@ const config = defineConfig(({ mode }) => {
 		preview: {
 			host: "0.0.0.0",
 			port: 3010,
-			allowedHosts: getAllowedHosts(
-				env.BETTER_AUTH_URL,
-				env.FRONTEND_ALLOWED_HOSTS,
-			),
+			allowedHosts: getAllowedHosts(env.BETTER_AUTH_URL, env.WEB_ALLOWED_HOSTS),
 		},
 	};
 });

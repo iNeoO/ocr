@@ -72,7 +72,7 @@ const TOO_MANY_REQUESTS = 429;
  * already pushed to S3. Never throws: the caller is on its way to rethrowing
  * the error that caused the compensation, and a cleanup failure must not
  * replace it — that would hide the real reason behind an S3 message. It is
- * reported through `ocr_frontend_orphaned_file_cleanups_total{result="failed"}`
+ * reported through `ocr_web_orphaned_file_cleanups_total{result="failed"}`
  * instead, which is the only signal that the bucket now holds an orphan.
  */
 const cleanUpOrphanedFile = async (fileId: string, userId: string) => {

@@ -9,47 +9,26 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as ValidateEmailRouteImport } from './routes/validate-email'
-import { Route as TermsAndConditionsRouteImport } from './routes/terms-and-conditions'
-import { Route as SignUpRouteImport } from './routes/sign-up'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as PasswordForgottenRouteImport } from './routes/password-forgotten'
-import { Route as MetricsRouteImport } from './routes/metrics'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as AuthRouteRouteImport } from './routes/_auth/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthRouteRouteImport } from './routes/_auth/route'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as MetricsRouteImport } from './routes/metrics'
+import { Route as PasswordForgottenRouteImport } from './routes/password-forgotten'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as SignUpRouteImport } from './routes/sign-up'
+import { Route as TermsAndConditionsRouteImport } from './routes/terms-and-conditions'
+import { Route as ValidateEmailRouteImport } from './routes/validate-email'
 import { Route as AuthProcessesRouteImport } from './routes/_auth/processes'
-import { Route as DownloadsProcessesIdRouteImport } from './routes/downloads/processes/$id'
 import { Route as ApiProcessesStatusRouteImport } from './routes/api/processes/status'
+import { Route as DownloadsProcessesIdRouteImport } from './routes/downloads/processes/$id'
 
-const ValidateEmailRoute = ValidateEmailRouteImport.update({
-  id: '/validate-email',
-  path: '/validate-email',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TermsAndConditionsRoute = TermsAndConditionsRouteImport.update({
-  id: '/terms-and-conditions',
-  path: '/terms-and-conditions',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SignUpRoute = SignUpRouteImport.update({
-  id: '/sign-up',
-  path: '/sign-up',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PasswordForgottenRoute = PasswordForgottenRouteImport.update({
-  id: '/password-forgotten',
-  path: '/password-forgotten',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MetricsRoute = MetricsRouteImport.update({
-  id: '/metrics',
-  path: '/metrics',
+const AuthRouteRoute = AuthRouteRouteImport.update({
+  id: '/_auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -57,13 +36,34 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthRouteRoute = AuthRouteRouteImport.update({
-  id: '/_auth',
+const MetricsRoute = MetricsRouteImport.update({
+  id: '/metrics',
+  path: '/metrics',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const PasswordForgottenRoute = PasswordForgottenRouteImport.update({
+  id: '/password-forgotten',
+  path: '/password-forgotten',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignUpRoute = SignUpRouteImport.update({
+  id: '/sign-up',
+  path: '/sign-up',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsAndConditionsRoute = TermsAndConditionsRouteImport.update({
+  id: '/terms-and-conditions',
+  path: '/terms-and-conditions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ValidateEmailRoute = ValidateEmailRouteImport.update({
+  id: '/validate-email',
+  path: '/validate-email',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthProcessesRoute = AuthProcessesRouteImport.update({
@@ -71,14 +71,14 @@ const AuthProcessesRoute = AuthProcessesRouteImport.update({
   path: '/processes',
   getParentRoute: () => AuthRouteRoute,
 } as any)
-const DownloadsProcessesIdRoute = DownloadsProcessesIdRouteImport.update({
-  id: '/downloads/processes/$id',
-  path: '/downloads/processes/$id',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiProcessesStatusRoute = ApiProcessesStatusRouteImport.update({
   id: '/api/processes/status',
   path: '/api/processes/status',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DownloadsProcessesIdRoute = DownloadsProcessesIdRouteImport.update({
+  id: '/downloads/processes/$id',
+  path: '/downloads/processes/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -182,53 +182,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/validate-email': {
-      id: '/validate-email'
-      path: '/validate-email'
-      fullPath: '/validate-email'
-      preLoaderRoute: typeof ValidateEmailRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/terms-and-conditions': {
-      id: '/terms-and-conditions'
-      path: '/terms-and-conditions'
-      fullPath: '/terms-and-conditions'
-      preLoaderRoute: typeof TermsAndConditionsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sign-up': {
-      id: '/sign-up'
-      path: '/sign-up'
-      fullPath: '/sign-up'
-      preLoaderRoute: typeof SignUpRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/password-forgotten': {
-      id: '/password-forgotten'
-      path: '/password-forgotten'
-      fullPath: '/password-forgotten'
-      preLoaderRoute: typeof PasswordForgottenRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/metrics': {
-      id: '/metrics'
-      path: '/metrics'
-      fullPath: '/metrics'
-      preLoaderRoute: typeof MetricsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_auth': {
@@ -238,11 +196,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/metrics': {
+      id: '/metrics'
+      path: '/metrics'
+      fullPath: '/metrics'
+      preLoaderRoute: typeof MetricsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/password-forgotten': {
+      id: '/password-forgotten'
+      path: '/password-forgotten'
+      fullPath: '/password-forgotten'
+      preLoaderRoute: typeof PasswordForgottenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sign-up': {
+      id: '/sign-up'
+      path: '/sign-up'
+      fullPath: '/sign-up'
+      preLoaderRoute: typeof SignUpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms-and-conditions': {
+      id: '/terms-and-conditions'
+      path: '/terms-and-conditions'
+      fullPath: '/terms-and-conditions'
+      preLoaderRoute: typeof TermsAndConditionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/validate-email': {
+      id: '/validate-email'
+      path: '/validate-email'
+      fullPath: '/validate-email'
+      preLoaderRoute: typeof ValidateEmailRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_auth/processes': {
@@ -252,18 +252,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthProcessesRouteImport
       parentRoute: typeof AuthRouteRoute
     }
-    '/downloads/processes/$id': {
-      id: '/downloads/processes/$id'
-      path: '/downloads/processes/$id'
-      fullPath: '/downloads/processes/$id'
-      preLoaderRoute: typeof DownloadsProcessesIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/processes/status': {
       id: '/api/processes/status'
       path: '/api/processes/status'
       fullPath: '/api/processes/status'
       preLoaderRoute: typeof ApiProcessesStatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/downloads/processes/$id': {
+      id: '/downloads/processes/$id'
+      path: '/downloads/processes/$id'
+      fullPath: '/downloads/processes/$id'
+      preLoaderRoute: typeof DownloadsProcessesIdRouteImport
       parentRoute: typeof rootRouteImport
     }
   }

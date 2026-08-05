@@ -29,7 +29,7 @@ export const createAuth = ({
 			sendOnSignUp: true,
 			sendOnSignIn: true,
 			sendVerificationEmail: ({ user, url: verificationUrl, token }) => {
-				const frontendVerificationUrl = (() => {
+				const webVerificationUrl = (() => {
 					try {
 						const sourceUrl = new URL(verificationUrl);
 						const targetUrl = new URL(
@@ -55,7 +55,7 @@ export const createAuth = ({
 				return mailService.sendVerificationEmail({
 					to: user.email,
 					name: user.name,
-					url: frontendVerificationUrl,
+					url: webVerificationUrl,
 				});
 			},
 		},

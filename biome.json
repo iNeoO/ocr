@@ -8,8 +8,8 @@
 	"files": {
 		"ignoreUnknown": false,
 		"includes": [
-			"./apps/frontend/src/**/*",
-			"./apps/frontend/vite.config.ts",
+			"./apps/web/src/**/*",
+			"./apps/web/vite.config.ts",
 			"./db/src/**/*",
 			"./crons/*/src/**/*",
 			"./packages/common/src/**/*",
