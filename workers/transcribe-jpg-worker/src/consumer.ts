@@ -1,4 +1,7 @@
-import { startResilientConsumer } from "@ocr/infra/amqp";
+import {
+	type ResilientConsumer,
+	startResilientConsumer,
+} from "@ocr/infra/amqp";
 import { env } from "@ocr/infra/configs";
 import { loggerStorage, pinoLogger } from "@ocr/infra/libs";
 import {
@@ -8,16 +11,16 @@ import {
 
 type StartConsumerParams = {
 	handler: (message: TranscribeJpgJobData) => Promise<void>;
-	shutdown: () => Promise<void>;
 };
 
-export const startConsumer = ({ handler, shutdown }: StartConsumerParams) => {
+export const startConsumer = ({
+	handler,
+}: StartConsumerParams): ResilientConsumer =>
 	startResilientConsumer({
 		amqpUrl: env.AMQP_URL,
 		queue: env.AMQ_TRANSCRIBE_JPG_QUEUE,
 		prefetch: env.AMQ_TRANSCRIBE_JPG_PREFETCH,
 		workerName: "transcribe-jpg-worker",
-		shutdown,
 		onMessage: async (channel, rawMessage) => {
 			const messageLogger = pinoLogger.child({
 				worker: "transcribe-jpg-worker",
@@ -54,4 +57,3 @@ export const startConsumer = ({ handler, shutdown }: StartConsumerParams) => {
 			});
 		},
 	});
-};

@@ -1,4 +1,7 @@
-import { startResilientConsumer } from "@ocr/infra/amqp";
+import {
+	type ResilientConsumer,
+	startResilientConsumer,
+} from "@ocr/infra/amqp";
 import { env } from "@ocr/infra/configs";
 import { loggerStorage, pinoLogger } from "@ocr/infra/libs";
 import {
@@ -8,16 +11,16 @@ import {
 
 type StartConsumerParams = {
 	handler: (message: PostProcessPageJobData) => Promise<void>;
-	shutdown: () => Promise<void>;
 };
 
-export const startConsumer = ({ handler, shutdown }: StartConsumerParams) => {
+export const startConsumer = ({
+	handler,
+}: StartConsumerParams): ResilientConsumer =>
 	startResilientConsumer({
 		amqpUrl: env.AMQP_URL,
 		queue: env.AMQ_POST_PROCESS_PAGE_QUEUE,
 		prefetch: env.AMQ_POST_PROCESS_PAGE_PREFETCH,
 		workerName: "post-process-page-worker",
-		shutdown,
 		onMessage: async (channel, rawMessage) => {
 			const messageLogger = pinoLogger.child({
 				worker: "post-process-page-worker",
@@ -54,4 +57,3 @@ export const startConsumer = ({ handler, shutdown }: StartConsumerParams) => {
 			});
 		},
 	});
-};

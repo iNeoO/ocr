@@ -1,4 +1,7 @@
-import { startResilientConsumer } from "@ocr/infra/amqp";
+import {
+	type ResilientConsumer,
+	startResilientConsumer,
+} from "@ocr/infra/amqp";
 import { env } from "@ocr/infra/configs";
 import { loggerStorage, pinoLogger } from "@ocr/infra/libs";
 
@@ -9,16 +12,16 @@ import {
 
 type StartConsumerParams = {
 	handler: (message: SplitPdfJobData) => Promise<void>;
-	shutdown: () => Promise<void>;
 };
 
-export const startConsumer = ({ handler, shutdown }: StartConsumerParams) => {
+export const startConsumer = ({
+	handler,
+}: StartConsumerParams): ResilientConsumer =>
 	startResilientConsumer({
 		amqpUrl: env.AMQP_URL,
 		queue: env.AMQ_SPLIT_PDF_QUEUE,
 		prefetch: env.AMQ_SPLIT_PDF_PREFETCH,
 		workerName: "split-pdf-worker",
-		shutdown,
 		onMessage: async (channel, rawMessage) => {
 			const messageLogger = pinoLogger.child({
 				worker: "split-pdf-worker",
@@ -47,4 +50,3 @@ export const startConsumer = ({ handler, shutdown }: StartConsumerParams) => {
 			});
 		},
 	});
-};

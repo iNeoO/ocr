@@ -12,7 +12,7 @@ x-app-env: &app-env
     S3_ENDPOINT: http://garage-prod:3900
     S3_REGION: garage
     S3_FORCE_PATH_STYLE: true
-    FRONTEND_ALLOWED_HOSTS: ${FRONTEND_ALLOWED_HOSTS:-ocr-frontend-prod}
+    WEB_ALLOWED_HOSTS: ${WEB_ALLOWED_HOSTS:-ocr-web-prod}
   networks:
     - ocr-network
     - redis-network
@@ -49,19 +49,19 @@ services:
     container_name: ocr-db-migrate-prod
     build:
       context: .
-      dockerfile: ./apps/frontend/Dockerfile
+      dockerfile: ./apps/web/Dockerfile
     command: ["pnpm", "--filter", "@ocr/db", "migrate"]
     restart: "no"
     depends_on:
       postgres:
         condition: service_healthy
 
-  frontend:
+  web:
     <<: *app-env
-    container_name: ocr-frontend-prod
+    container_name: ocr-web-prod
     build:
       context: .
-      dockerfile: ./apps/frontend/Dockerfile
+      dockerfile: ./apps/web/Dockerfile
     restart: unless-stopped
     ports:
       - "127.0.0.1:3010:3010"
@@ -84,6 +84,8 @@ services:
       context: .
       dockerfile: ./workers/split-pdf-worker/Dockerfile
     restart: unless-stopped
+    # Leaves room for the consumer drain (15s) before SIGKILL.
+    stop_grace_period: 30s
     depends_on:
       postgres:
         condition: service_healthy
@@ -97,6 +99,8 @@ services:
       context: .
       dockerfile: ./workers/transcribe-jpg-worker/Dockerfile
     restart: unless-stopped
+    # Leaves room for the consumer drain (15s) before SIGKILL.
+    stop_grace_period: 30s
     depends_on:
       postgres:
         condition: service_healthy
@@ -110,6 +114,8 @@ services:
       context: .
       dockerfile: ./workers/post-process-page-worker/Dockerfile
     restart: unless-stopped
+    # Leaves room for the consumer drain (15s) before SIGKILL.
+    stop_grace_period: 30s
     depends_on:
       postgres:
         condition: service_healthy

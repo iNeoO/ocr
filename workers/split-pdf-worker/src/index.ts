@@ -5,10 +5,37 @@ import { createContainer } from "./container.js";
 const start = async () => {
 	const container = createContainer();
 	await container.init();
-	pinoLogger.info("Starting split PDF worker");
-	await startConsumer({
-		handler: container.handler(),
-		shutdown: container.shutdown,
+
+	const workerLogger = pinoLogger.child({ worker: "split-pdf-worker" });
+	workerLogger.info("Starting split PDF worker");
+
+	const consumer = startConsumer({ handler: container.handler() });
+
+	let closing = false;
+	const close = async (signal: string) => {
+		if (closing) {
+			return;
+		}
+		closing = true;
+
+		workerLogger.info({ signal }, "Shutting down split PDF worker");
+
+		try {
+			await consumer.end();
+			await container.shutdown();
+		} catch (error) {
+			workerLogger.error({ err: error }, "Split PDF worker shutdown failed");
+			process.exit(1);
+		}
+
+		process.exit(0);
+	};
+
+	process.on("SIGINT", () => {
+		void close("SIGINT");
+	});
+	process.on("SIGTERM", () => {
+		void close("SIGTERM");
 	});
 };
 
