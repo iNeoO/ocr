@@ -172,6 +172,85 @@ export class FilesService {
 		return markdownFileId;
 	}
 
+	async createProcessZipFile({
+		processId,
+		buffer,
+		filename,
+		now,
+	}: {
+		processId: string;
+		buffer: Buffer;
+		filename: string;
+		now: Date;
+	}) {
+		const zipFileId = randomUUID();
+		const objectKey = `processes/${processId}/${zipFileId}.zip`;
+
+		await s3.send(
+			new PutObjectCommand({
+				Bucket: s3Config.bucket,
+				Key: objectKey,
+				Body: buffer,
+				ContentLength: buffer.length,
+				ContentType: "application/zip",
+			}),
+		);
+
+		await this.db.insert(schema.file).values({
+			id: zipFileId,
+			kind: "zip",
+			bucket: s3Config.bucket,
+			objectKey,
+			mimeType: "application/zip",
+			size: buffer.length,
+			filename,
+			createdAt: now,
+			updatedAt: now,
+		});
+
+		return zipFileId;
+	}
+
+	async createProcessMarkdownFile({
+		processId,
+		content,
+		filename,
+		now,
+	}: {
+		processId: string;
+		content: string;
+		filename: string;
+		now: Date;
+	}) {
+		const mergedMdFileId = randomUUID();
+		const objectKey = `processes/${processId}/${mergedMdFileId}.md`;
+		const body = Buffer.from(content, "utf-8");
+
+		await s3.send(
+			new PutObjectCommand({
+				Bucket: s3Config.bucket,
+				Key: objectKey,
+				Body: body,
+				ContentLength: body.length,
+				ContentType: "text/markdown; charset=utf-8",
+			}),
+		);
+
+		await this.db.insert(schema.file).values({
+			id: mergedMdFileId,
+			kind: "process_markdown",
+			bucket: s3Config.bucket,
+			objectKey,
+			mimeType: "text/markdown",
+			size: body.length,
+			filename,
+			createdAt: now,
+			updatedAt: now,
+		});
+
+		return mergedMdFileId;
+	}
+
 	async deleteFiles(fileIds: string[]) {
 		const uniqueFileIds = [...new Set(fileIds.filter(Boolean))];
 		if (uniqueFileIds.length === 0) {

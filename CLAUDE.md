@@ -7,7 +7,11 @@ overview and deployment instructions.
 
 OCR ingests PDFs, splits them into page images, transcribes them through an
 asynchronous queue pipeline, refines the result with an LLM, and delivers a ZIP
-archive. Production: [ocr.tuturu.io](https://ocr.tuturu.io).
+archive and a merged markdown file. Production: [ocr.tuturu.io](https://ocr.tuturu.io).
+
+Feature design rationale lives in [docs/adr/](docs/adr/) and [docs/plans/](docs/plans/) —
+check there before re-deciding something already decided (e.g. why old processes are
+permanently non-downloadable via the current download routes).
 
 ## Architecture
 
@@ -39,17 +43,48 @@ as types. That makes the workspace graph technically circular, which is why
 services`) and why every package's `exports` map points `types` at `src/*.ts` while
 `default` points at `dist/*.js` — `tsc` reads sources, Node runs the build.
 
+`build-zip-worker` and `merge-markdown-worker` must build before
+`post-process-page-worker` specifically, not merely before `services` — that worker's
+container imports their publishers' actual runtime classes (`dist/publisher.js` via
+`exports.default`), not just their types. `build:runtime`'s ordering encodes this.
+
 ### Pipeline
 
 ```
 upload → split-pdf-worker → transcribe-jpg-worker → post-process-page-worker
-                                                  → ZIP + download
+                                                  → finalizing (fan-out)
+                                                       ├─ build-zip-worker      → zipFileId
+                                                       └─ merge-markdown-worker → mergedMdFileId
+                                                  → completed → ZIP + markdown download
 cleanup-process-worker: node-cron, "0 */2 * * *" UTC, retention 7 days
 ```
 
+Last page done → `PageService.syncProcessProgress` (runs inside
+`post-process-page-worker`, not `apps/web`) calls `ProcessService.finalizeProcess`:
+sets `status = "finalizing"`, publishes `{ processId }` to both new queues. Each of
+the two workers completes with one atomic `UPDATE ... WHERE status = 'finalizing'`
+(`markZipReady`/`markMergedMdReady` in `process.service.ts`) — whichever lands second
+flips `status` to `"completed"`. The `CASE` branch assigning the enum column needs an
+explicit `::process_status` cast (Postgres resolves an all-string-literal `CASE` to
+`text` otherwise, which fails at runtime, invisible to TypeScript). Either worker
+throwing calls `failFinalization` → `"failed"`, guarded so a late success from the
+other worker can't overwrite it. Both new publishers are wired into
+**`post-process-page-worker`'s** container (the real call site), not `apps/web`'s —
+`apps/web`'s `ProcessService` only reads `zipFileId`/`mergedMdFileId` for downloads.
+
+The ZIP and markdown download routes serve the persisted `zipFileId`/`mergedMdFileId`
+directly — no on-the-fly rebuild fallback. Processes that completed before this
+feature shipped have both fields `NULL` and are permanently non-downloadable via
+these routes; this is deliberate, not a bug (see
+[docs/plans/2026-08-05-001-feat-parallel-process-finalization-plan.md](docs/plans/2026-08-05-001-feat-parallel-process-finalization-plan.md)).
+
 Each worker package owns the publisher for **its own** queue and exports it via
-`./publisher`. The *upstream* container instantiates the *downstream* publisher —
-`split-pdf-worker/container.ts` builds a `TranscribeJpgPublisher`, and so on.
+`./publisher`, built on `createResilientPublisher`
+([packages/infra/src/amqp/amqp.publisher.ts](packages/infra/src/amqp/amqp.publisher.ts)).
+The *upstream* container instantiates the *downstream* publisher —
+`split-pdf-worker/container.ts` builds a `TranscribeJpgPublisher`,
+`post-process-page-worker/container.ts` builds both `BuildZipPublisher` and
+`MergeMarkdownPublisher`, and so on.
 
 Live status reaches the browser over SSE at `GET /api/processes/status`, fed by
 `ProcessStatusPubSubService` on Redis pub/sub. Stage names are the zod enum in
@@ -115,6 +150,10 @@ src/handler/<name>.handler.ts     createXWorker({ deps }) => (message) => Promis
 Messages are validated with zod on both publish and consume. A handler that throws gets
 `channel.nack(msg, false, false)` — no requeue, no DLQ. Handlers are responsible for
 publishing their own `process_status` event on both success and failure paths.
+
+This layout applies to queue-consumer workers only. `cleanup-process-worker` is
+cron-triggered (`node-cron`) and has no `consumer.ts`, `publisher.ts`, or `./publisher`
+export.
 
 `startConsumer` returns the `ResilientConsumer` handle; `index.ts` owns SIGINT/SIGTERM and
 shuts down in order — `consumer.end()` (cancel, drain in-flight jobs, close) then
@@ -187,6 +226,9 @@ migration or the `drizzle/meta` journal.
   **3010**. `BETTER_AUTH_URL` must match the origin the browser actually uses, and
   non-localhost hostnames (proxies, health probes) need `WEB_ALLOWED_HOSTS`.
 - `routeTree.gen.ts` and `styles.css` are excluded from Biome — generated, do not edit.
+- A route with an extra static segment under a dynamic `$id` needs `$id` turned into a
+  **directory**, not a dot-file — `downloads/processes/$id/markdown.ts`, not
+  `$id.markdown.ts` — for it to coexist with `downloads/processes/$id.ts`.
 - Production Redis/RabbitMQ/Garage come from the shared stack in `../infra` over external
   Docker networks; only Postgres and the web app are owned by this compose file.
 

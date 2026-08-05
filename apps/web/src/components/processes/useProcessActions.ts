@@ -4,6 +4,7 @@ import { useState } from "react";
 import {
 	deleteProcess,
 	downloadProcessArchive,
+	downloadProcessMarkdown,
 	processesQueryKey,
 	type UserProcess,
 	uploadProcessFile,
@@ -17,6 +18,9 @@ export function useProcessActions() {
 	const [downloadProcessId, setDownloadProcessId] = useState<string | null>(
 		null,
 	);
+	const [downloadMarkdownProcessId, setDownloadMarkdownProcessId] = useState<
+		string | null
+	>(null);
 	const [actionError, setActionError] = useState<string | null>(null);
 	const [pendingDeleteProcess, setPendingDeleteProcess] =
 		useState<UserProcess | null>(null);
@@ -69,6 +73,25 @@ export function useProcessActions() {
 		}
 	};
 
+	const downloadMarkdown = async (processId: string) => {
+		setDownloadMarkdownProcessId(processId);
+		setActionError(null);
+
+		try {
+			const { blob, filename } = await downloadProcessMarkdown(processId);
+			triggerBrowserDownload(blob, filename);
+		} catch (error) {
+			setActionError(
+				error instanceof Error ? error.message : "Download failed.",
+			);
+			throw error;
+		} finally {
+			setDownloadMarkdownProcessId((currentProcessId) =>
+				currentProcessId === processId ? null : currentProcessId,
+			);
+		}
+	};
+
 	const requestDelete = (process: UserProcess) => {
 		setActionError(null);
 		setPendingDeleteProcess(process);
@@ -93,6 +116,7 @@ export function useProcessActions() {
 	return {
 		isUploading: uploadMutation.isPending,
 		downloadProcessId,
+		downloadMarkdownProcessId,
 		deleteProcessId: deleteMutation.isPending
 			? (deleteMutation.variables ?? null)
 			: null,
@@ -102,6 +126,7 @@ export function useProcessActions() {
 		setPendingDeleteProcess,
 		upload,
 		download,
+		downloadMarkdown,
 		requestDelete,
 		confirmDelete,
 	};

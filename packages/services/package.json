@@ -10,9 +10,11 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.888.0",
     "@better-auth/redis-storage": "^1.6.0",
+    "@ocr/build-zip-worker": "workspace:*",
     "@ocr/common": "workspace:*",
     "@ocr/db": "workspace:*",
     "@ocr/infra": "workspace:*",
+    "@ocr/merge-markdown-worker": "workspace:*",
     "@ocr/post-process-page-worker": "workspace:*",
     "@ocr/split-pdf-worker": "workspace:*",
     "@ocr/transcribe-jpg-worker": "workspace:*",

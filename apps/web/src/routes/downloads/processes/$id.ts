@@ -1,4 +1,5 @@
-import { pinoLogger } from "@ocr/infra";
+import { APP_ERROR } from "@ocr/common";
+import { InternalError, pinoLogger } from "@ocr/infra";
 import { createFileRoute } from "@tanstack/react-router";
 import { getSession } from "../../../libs/api/auth";
 import { buildContentDispositionAttachment } from "../../../libs/http/content-disposition";
@@ -25,25 +26,43 @@ export const Route = createFileRoute("/downloads/processes/$id")({
 						return Response.json({ message: "Unauthorized" }, { status: 401 });
 					}
 
-					const archive =
-						await container.processService.buildProcessMarkdownZip(
-							params.id,
-							session.user.id,
-						);
+					const process = await container.processService.getProcessForUser(
+						params.id,
+						session.user.id,
+					);
+
+					if (!process.zipFileId) {
+						throw new InternalError({
+							code: APP_ERROR.PROCESS_OUTPUT_INCOMPLETE,
+							message: "Process output is incomplete",
+						});
+					}
+
+					const [file, buffer] = await Promise.all([
+						container.filesService.getFileById(process.zipFileId),
+						container.filesService.getFileBuffer(process.zipFileId),
+					]);
+
+					if (!file) {
+						throw new InternalError({
+							code: APP_ERROR.FILE_NOT_FOUND,
+							message: "File not found",
+						});
+					}
 
 					pinoLogger.info(
 						{
 							processId: params.id,
 							userId: session.user.id,
-							size: archive.buffer.length,
+							size: buffer.length,
 						},
 						"Process download ready",
 					);
 
 					countDownload("success");
-					observeDownloadArchiveSize(archive.buffer.length);
+					observeDownloadArchiveSize(buffer.length);
 
-					const body = new Blob([new Uint8Array(archive.buffer)], {
+					const body = new Blob([new Uint8Array(buffer)], {
 						type: "application/zip",
 					});
 
@@ -52,9 +71,9 @@ export const Route = createFileRoute("/downloads/processes/$id")({
 						headers: {
 							"Content-Type": "application/zip",
 							"Content-Disposition": buildContentDispositionAttachment(
-								archive.filename,
+								file.filename,
 							),
-							"Content-Length": String(archive.buffer.length),
+							"Content-Length": String(buffer.length),
 							"Cache-Control": "no-store",
 						},
 					});

@@ -6,6 +6,7 @@ export const fileKind = pgEnum("file_kind", [
 	"page_image",
 	"page_markdown",
 	"zip",
+	"process_markdown",
 ]);
 
 export const file = pgTable("file", {

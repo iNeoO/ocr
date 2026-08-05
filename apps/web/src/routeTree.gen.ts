@@ -21,6 +21,7 @@ import { Route as ValidateEmailRouteImport } from './routes/validate-email'
 import { Route as AuthProcessesRouteImport } from './routes/_auth/processes'
 import { Route as ApiProcessesStatusRouteImport } from './routes/api/processes/status'
 import { Route as DownloadsProcessesIdRouteImport } from './routes/downloads/processes/$id'
+import { Route as DownloadsProcessesIdMarkdownRouteImport } from './routes/downloads/processes/$id/markdown'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -81,6 +82,12 @@ const DownloadsProcessesIdRoute = DownloadsProcessesIdRouteImport.update({
   path: '/downloads/processes/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DownloadsProcessesIdMarkdownRoute =
+  DownloadsProcessesIdMarkdownRouteImport.update({
+    id: '/markdown',
+    path: '/markdown',
+    getParentRoute: () => DownloadsProcessesIdRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -93,7 +100,8 @@ export interface FileRoutesByFullPath {
   '/validate-email': typeof ValidateEmailRoute
   '/processes': typeof AuthProcessesRoute
   '/api/processes/status': typeof ApiProcessesStatusRoute
-  '/downloads/processes/$id': typeof DownloadsProcessesIdRoute
+  '/downloads/processes/$id': typeof DownloadsProcessesIdRouteWithChildren
+  '/downloads/processes/$id/markdown': typeof DownloadsProcessesIdMarkdownRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -106,7 +114,8 @@ export interface FileRoutesByTo {
   '/validate-email': typeof ValidateEmailRoute
   '/processes': typeof AuthProcessesRoute
   '/api/processes/status': typeof ApiProcessesStatusRoute
-  '/downloads/processes/$id': typeof DownloadsProcessesIdRoute
+  '/downloads/processes/$id': typeof DownloadsProcessesIdRouteWithChildren
+  '/downloads/processes/$id/markdown': typeof DownloadsProcessesIdMarkdownRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -121,7 +130,8 @@ export interface FileRoutesById {
   '/validate-email': typeof ValidateEmailRoute
   '/_auth/processes': typeof AuthProcessesRoute
   '/api/processes/status': typeof ApiProcessesStatusRoute
-  '/downloads/processes/$id': typeof DownloadsProcessesIdRoute
+  '/downloads/processes/$id': typeof DownloadsProcessesIdRouteWithChildren
+  '/downloads/processes/$id/markdown': typeof DownloadsProcessesIdMarkdownRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -137,6 +147,7 @@ export interface FileRouteTypes {
     | '/processes'
     | '/api/processes/status'
     | '/downloads/processes/$id'
+    | '/downloads/processes/$id/markdown'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -150,6 +161,7 @@ export interface FileRouteTypes {
     | '/processes'
     | '/api/processes/status'
     | '/downloads/processes/$id'
+    | '/downloads/processes/$id/markdown'
   id:
     | '__root__'
     | '/'
@@ -164,6 +176,7 @@ export interface FileRouteTypes {
     | '/_auth/processes'
     | '/api/processes/status'
     | '/downloads/processes/$id'
+    | '/downloads/processes/$id/markdown'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -177,7 +190,7 @@ export interface RootRouteChildren {
   TermsAndConditionsRoute: typeof TermsAndConditionsRoute
   ValidateEmailRoute: typeof ValidateEmailRoute
   ApiProcessesStatusRoute: typeof ApiProcessesStatusRoute
-  DownloadsProcessesIdRoute: typeof DownloadsProcessesIdRoute
+  DownloadsProcessesIdRoute: typeof DownloadsProcessesIdRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -266,6 +279,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DownloadsProcessesIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/downloads/processes/$id/markdown': {
+      id: '/downloads/processes/$id/markdown'
+      path: '/markdown'
+      fullPath: '/downloads/processes/$id/markdown'
+      preLoaderRoute: typeof DownloadsProcessesIdMarkdownRouteImport
+      parentRoute: typeof DownloadsProcessesIdRoute
+    }
   }
 }
 
@@ -281,6 +301,17 @@ const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(
   AuthRouteRouteChildren,
 )
 
+interface DownloadsProcessesIdRouteChildren {
+  DownloadsProcessesIdMarkdownRoute: typeof DownloadsProcessesIdMarkdownRoute
+}
+
+const DownloadsProcessesIdRouteChildren: DownloadsProcessesIdRouteChildren = {
+  DownloadsProcessesIdMarkdownRoute: DownloadsProcessesIdMarkdownRoute,
+}
+
+const DownloadsProcessesIdRouteWithChildren =
+  DownloadsProcessesIdRoute._addFileChildren(DownloadsProcessesIdRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRouteRoute: AuthRouteRouteWithChildren,
@@ -292,7 +323,7 @@ const rootRouteChildren: RootRouteChildren = {
   TermsAndConditionsRoute: TermsAndConditionsRoute,
   ValidateEmailRoute: ValidateEmailRoute,
   ApiProcessesStatusRoute: ApiProcessesStatusRoute,
-  DownloadsProcessesIdRoute: DownloadsProcessesIdRoute,
+  DownloadsProcessesIdRoute: DownloadsProcessesIdRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

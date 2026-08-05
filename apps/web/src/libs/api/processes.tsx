@@ -152,3 +152,28 @@ export const downloadProcessArchive = async (processId: string) => {
 		filename,
 	};
 };
+
+export const downloadProcessMarkdown = async (processId: string) => {
+	const response = await fetch(`/downloads/processes/${processId}/markdown`, {
+		method: "GET",
+		credentials: "include",
+	});
+
+	if (!response.ok) {
+		const payload = (await response.json().catch(() => null)) as {
+			message?: string;
+		} | null;
+		throw new Error(payload?.message ?? "Download failed.");
+	}
+
+	const blob = await response.blob();
+	const filename =
+		parseContentDispositionFilename(
+			response.headers.get("content-disposition"),
+		) ?? `process-${processId}.md`;
+
+	return {
+		blob,
+		filename,
+	};
+};

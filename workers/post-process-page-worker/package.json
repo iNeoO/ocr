@@ -9,8 +9,10 @@
   },
   "dependencies": {
     "amqplib": "catalog:",
+    "@ocr/build-zip-worker": "workspace:*",
     "@ocr/db": "workspace:*",
     "@ocr/infra": "workspace:*",
+    "@ocr/merge-markdown-worker": "workspace:*",
     "@ocr/services": "workspace:*",
     "zod": "catalog:"
   },

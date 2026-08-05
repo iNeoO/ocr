@@ -122,6 +122,36 @@ services:
       db-migrate:
         condition: service_completed_successfully
 
+  build-zip-worker:
+    <<: *app-env
+    container_name: ocr-build-zip-worker-prod
+    build:
+      context: .
+      dockerfile: ./workers/build-zip-worker/Dockerfile
+    restart: unless-stopped
+    # Leaves room for the consumer drain (15s) before SIGKILL.
+    stop_grace_period: 30s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      db-migrate:
+        condition: service_completed_successfully
+
+  merge-markdown-worker:
+    <<: *app-env
+    container_name: ocr-merge-markdown-worker-prod
+    build:
+      context: .
+      dockerfile: ./workers/merge-markdown-worker/Dockerfile
+    restart: unless-stopped
+    # Leaves room for the consumer drain (15s) before SIGKILL.
+    stop_grace_period: 30s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      db-migrate:
+        condition: service_completed_successfully
+
   cleanup-process-worker:
     <<: *app-env
     container_name: ocr-cleanup-process-worker-prod

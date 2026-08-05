@@ -1,5 +1,5 @@
-import { getLoggerStore } from "@ocr/infra";
-import amqp from "amqplib";
+import { createResilientPublisher } from "@ocr/infra/amqp";
+import { getLoggerStore } from "@ocr/infra/libs";
 import {
 	type TranscribeJpgJobData,
 	transcribeJpgJobDataSchema,
@@ -11,66 +11,28 @@ type TranscribeJpgPublisherOptions = {
 };
 
 export class TranscribeJpgPublisher {
-	private amqpUrl: string;
-	private queue: string;
-	private connection?: amqp.ChannelModel;
-	private channelPromise?: Promise<amqp.Channel>;
+	private readonly queue: string;
+	private readonly publisher: ReturnType<typeof createResilientPublisher>;
 
 	constructor(options: TranscribeJpgPublisherOptions) {
-		this.amqpUrl = options.amqpUrl;
 		this.queue = options.queue;
-	}
-
-	private async getChannel() {
-		if (!this.channelPromise) {
-			this.channelPromise = amqp
-				.connect(this.amqpUrl)
-				.then(async (connection) => {
-					this.connection = connection;
-					connection.on("close", () => {
-						this.connection = undefined;
-						this.channelPromise = undefined;
-					});
-					const channel = await connection.createChannel();
-					await channel.assertQueue(this.queue, { durable: true });
-					return channel;
-				})
-				.catch((error) => {
-					const logger = getLoggerStore();
-					logger.error({ err: error }, "Failed to connect to AMQP server");
-					this.channelPromise = undefined;
-					throw error;
-				});
-		}
-		return this.channelPromise;
+		this.publisher = createResilientPublisher({
+			amqpUrl: options.amqpUrl,
+			queue: options.queue,
+			workerName: "transcribe-jpg-worker",
+		});
 	}
 
 	async publish(message: TranscribeJpgJobData) {
 		const payload = transcribeJpgJobDataSchema.parse(message);
-		const logger = getLoggerStore();
-		const channel = await this.getChannel();
-		channel.sendToQueue(this.queue, Buffer.from(JSON.stringify(payload)), {
-			persistent: true,
-			contentType: "application/json",
-		});
-		logger.info(
+		await this.publisher.publish(payload);
+		getLoggerStore().info(
 			{ queue: this.queue, pageId: payload.pageId },
 			"Published transcribe JPG job",
 		);
 	}
 
 	async close() {
-		const channelPromise = this.channelPromise;
-		this.channelPromise = undefined;
-		const channel = channelPromise
-			? await channelPromise.catch(() => null)
-			: null;
-		if (channel) {
-			await channel.close().catch(() => undefined);
-		}
-		if (this.connection) {
-			await this.connection.close().catch(() => undefined);
-			this.connection = undefined;
-		}
+		await this.publisher.close();
 	}
 }

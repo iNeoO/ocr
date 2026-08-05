@@ -36,6 +36,10 @@ export const envSchema = z
 		AMQ_TRANSCRIBE_JPG_PREFETCH: z.coerce.number().default(5),
 		AMQ_POST_PROCESS_PAGE_QUEUE: z.string().default("post-process-page-jobs"),
 		AMQ_POST_PROCESS_PAGE_PREFETCH: z.coerce.number().default(5),
+		AMQ_BUILD_ZIP_QUEUE: z.string().default("build-zip-jobs"),
+		AMQ_BUILD_ZIP_PREFETCH: z.coerce.number().default(5),
+		AMQ_MERGE_MARKDOWN_QUEUE: z.string().default("merge-markdown-jobs"),
+		AMQ_MERGE_MARKDOWN_PREFETCH: z.coerce.number().default(5),
 		OPENAI_API_KEY: z.string(),
 	})
 	.transform((env) => {

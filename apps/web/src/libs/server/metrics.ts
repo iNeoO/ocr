@@ -21,6 +21,7 @@ const KNOWN_ROUTES = new Set([
 	"/",
 	"/api/processes/status",
 	"/downloads/processes/:id",
+	"/downloads/processes/:id/markdown",
 	"/login",
 	"/metrics",
 	"/password-forgotten",
@@ -155,6 +156,12 @@ const createMetrics = () => {
 		labelNames: ["result"] as const,
 	});
 
+	const processesFinalizingStale = new Gauge({
+		name: `${METRIC_PREFIX}processes_finalizing_stale`,
+		help: "Processes stuck in the finalizing status longer than expected — a lost build-zip or merge-markdown job, since neither is retried.",
+		registers: [registry],
+	});
+
 	return {
 		registry,
 		httpRequestDurationSeconds,
@@ -169,6 +176,7 @@ const createMetrics = () => {
 		downloadArchiveBytes,
 		uploadsTotal,
 		orphanedFileCleanupsTotal,
+		processesFinalizingStale,
 	};
 };
 
@@ -277,4 +285,8 @@ export const countUpload = (
 
 export const countOrphanedFileCleanup = (result: "succeeded" | "failed") => {
 	metrics.orphanedFileCleanupsTotal.labels(result).inc();
+};
+
+export const setStaleFinalizingProcesses = (count: number) => {
+	metrics.processesFinalizingStale.set(count);
 };

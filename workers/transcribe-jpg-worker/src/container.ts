@@ -13,7 +13,10 @@ import { createTranscribeWorker } from "./handler/transcribe-jpg.handler.js";
 
 export const createContainer = () => {
 	const filesService = new FilesService(db);
-	const postProcessPagePublisher = new PostProcessPagePublisher();
+	const postProcessPagePublisher = new PostProcessPagePublisher({
+		amqpUrl: env.AMQP_URL,
+		queue: env.AMQ_POST_PROCESS_PAGE_QUEUE,
+	});
 	const processStatusPubSubService = new ProcessStatusPubSubService(
 		redis,
 		env.REDIS_KEY_PREFIX,

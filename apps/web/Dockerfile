@@ -20,7 +20,9 @@ COPY db/package.json db/package.json
 COPY packages/common/package.json packages/common/package.json
 COPY packages/infra/package.json packages/infra/package.json
 COPY packages/services/package.json packages/services/package.json
+COPY workers/build-zip-worker/package.json workers/build-zip-worker/package.json
 COPY workers/cleanup-process-worker/package.json workers/cleanup-process-worker/package.json
+COPY workers/merge-markdown-worker/package.json workers/merge-markdown-worker/package.json
 COPY workers/post-process-page-worker/package.json workers/post-process-page-worker/package.json
 COPY workers/split-pdf-worker/package.json workers/split-pdf-worker/package.json
 COPY workers/transcribe-jpg-worker/package.json workers/transcribe-jpg-worker/package.json
@@ -34,7 +36,9 @@ COPY db db
 COPY packages/common packages/common
 COPY packages/infra packages/infra
 COPY packages/services packages/services
+COPY workers/build-zip-worker workers/build-zip-worker
 COPY workers/cleanup-process-worker workers/cleanup-process-worker
+COPY workers/merge-markdown-worker workers/merge-markdown-worker
 COPY workers/post-process-page-worker workers/post-process-page-worker
 COPY workers/split-pdf-worker workers/split-pdf-worker
 COPY workers/transcribe-jpg-worker workers/transcribe-jpg-worker
@@ -59,6 +63,8 @@ COPY --chown=node:node --from=builder /app/db db
 COPY --chown=node:node --from=builder /app/packages/common packages/common
 COPY --chown=node:node --from=builder /app/packages/infra packages/infra
 COPY --chown=node:node --from=builder /app/packages/services packages/services
+COPY --chown=node:node --from=builder /app/workers/build-zip-worker workers/build-zip-worker
+COPY --chown=node:node --from=builder /app/workers/merge-markdown-worker workers/merge-markdown-worker
 COPY --chown=node:node --from=builder /app/workers/post-process-page-worker workers/post-process-page-worker
 COPY --chown=node:node --from=builder /app/workers/split-pdf-worker workers/split-pdf-worker
 COPY --chown=node:node --from=builder /app/workers/transcribe-jpg-worker workers/transcribe-jpg-worker

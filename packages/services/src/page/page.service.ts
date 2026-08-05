@@ -435,10 +435,10 @@ export class PageService {
 		}
 
 		if (total > 0 && completed === total) {
-			await this.processService.completeProcess(processId, completed);
+			await this.processService.finalizeProcess(processId, completed);
 			logger.info(
 				{ processId, completedPages: completed },
-				"Marked process as completed",
+				"Marked process as finalizing",
 			);
 			return;
 		}

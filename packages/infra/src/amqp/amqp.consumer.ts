@@ -24,42 +24,18 @@ type StartResilientConsumerParams = {
 };
 
 export type ResilientConsumer = {
-	/**
-	 * Idempotent graceful stop: cancel the consumer, let in-flight messages ack,
-	 * then close the channel and the connection. Never rejects.
-	 */
 	end: () => Promise<void>;
 };
 
-/** Exponential backoff with full jitter on the second half, so the workers do
- * not all reconnect on the same tick after a broker restart. */
 const defaultRetryDelayMs = (attempt: number) => {
 	const base = Math.min(1000 * 2 ** attempt, 30_000);
 	return Math.round(base / 2 + Math.random() * (base / 2));
 };
 
-/** amqplib defaults `heartbeat` to 0, which disables it: a half-open TCP
- * connection (proxy, NAT, network partition) is then never detected and the
- * worker believes it is still consuming, forever. */
 const DEFAULT_HEARTBEAT_SECONDS = 30;
 
-/** Kept below the compose `stop_grace_period` so a stuck handler cannot turn a
- * graceful stop into a SIGKILL. */
 const DEFAULT_DRAIN_TIMEOUT_MS = 15_000;
 
-/**
- * amqplib has no built-in reconnect (unlike ioredis). Without this, a broker
- * restart silently drops the connection: the process runs out of event-loop
- * work and exits cleanly (code 0) with no error logged, so it never comes
- * back on its own even with a container restart policy.
- *
- * Reconnection is also triggered by a channel-level close and by a broker-side
- * `basic.cancel` — both leave the connection open, so watching the connection
- * alone yields a live process that consumes nothing.
- *
- * Signals are *not* handled here: the worker bootstrap owns them and calls
- * `end()` before tearing its own container down.
- */
 export const startResilientConsumer = ({
 	amqpUrl,
 	queue,
@@ -107,9 +83,6 @@ export const startResilientConsumer = ({
 		}
 	};
 
-	/** Handler rejections would otherwise be swallowed by amqplib (it ignores
-	 * the promise returned by the consume callback) and crash the process as an
-	 * unhandled rejection. Tracking them also lets shutdown wait for them. */
 	const trackInFlight = (task: Promise<void>) => {
 		const tracked = task
 			.catch((err) => {

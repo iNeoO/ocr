@@ -10,6 +10,10 @@ import { ProcessStatusPubSubService } from "@ocr/services/process-status/process
 import { SplitPdfPublisher } from "@ocr/split-pdf-worker/publisher";
 import { TranscribeJpgPublisher } from "@ocr/transcribe-jpg-worker/publisher";
 import { SERVER_CONTAINER_KEY } from "./container-registry";
+import { setStaleFinalizingProcesses } from "./metrics";
+
+const STALE_FINALIZING_SAMPLE_INTERVAL_MS = 60_000;
+const STALE_FINALIZING_THRESHOLD_MS = 15 * 60_000;
 
 type ServerContainer = {
 	db: typeof db;
@@ -31,7 +35,10 @@ type ContainerGlobal = typeof globalThis & {
 const createContainer = (): ServerContainer => {
 	const mailService = new MailService();
 	const filesService = new FilesService(db);
-	const splitPdfPublisher = new SplitPdfPublisher();
+	const splitPdfPublisher = new SplitPdfPublisher({
+		amqpUrl: env.AMQP_URL,
+		queue: env.AMQ_SPLIT_PDF_QUEUE,
+	});
 	const transcribeJpgPublisher = new TranscribeJpgPublisher({
 		amqpUrl: env.AMQP_URL,
 		queue: env.AMQ_TRANSCRIBE_JPG_QUEUE,
@@ -53,6 +60,19 @@ const createContainer = (): ServerContainer => {
 		processStatusPubSubService,
 	});
 
+	const staleFinalizingInterval = setInterval(() => {
+		processService
+			.countStaleFinalizingProcesses(STALE_FINALIZING_THRESHOLD_MS)
+			.then(setStaleFinalizingProcesses)
+			.catch((error: unknown) => {
+				pinoLogger.warn(
+					{ err: error },
+					"Failed to sample stale finalizing processes",
+				);
+			});
+	}, STALE_FINALIZING_SAMPLE_INTERVAL_MS);
+	staleFinalizingInterval.unref();
+
 	let shutdownPromise: Promise<void> | null = null;
 
 	return {
@@ -67,6 +87,7 @@ const createContainer = (): ServerContainer => {
 		transcribeJpgPublisher,
 		shutdown: () => {
 			shutdownPromise ??= (async () => {
+				clearInterval(staleFinalizingInterval);
 				await db.$client.end().catch((error: unknown) => {
 					pinoLogger.warn({ err: error }, "Failed to close database pool");
 				});

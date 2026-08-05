@@ -1,5 +1,6 @@
 import {
 	ArchiveBoxArrowDownIcon,
+	DocumentTextIcon,
 	TrashIcon,
 } from "@heroicons/react/24/outline";
 import { Button, Dialog, Flex, Table, Text } from "@radix-ui/themes";
@@ -10,9 +11,11 @@ import { ProcessStatusBadge } from "./ProcessStatusBadge";
 type ProcessesTableProps = {
 	processes: UserProcess[];
 	downloadProcessId: string | null;
+	downloadMarkdownProcessId: string | null;
 	deleteProcessId: string | null;
 	pendingDeleteProcess: UserProcess | null;
 	onDownload: (processId: string) => Promise<void>;
+	onDownloadMarkdown: (processId: string) => Promise<void>;
 	onRequestDelete: (process: UserProcess) => void;
 	onDeleteConfirmOpenChange: (open: boolean) => void;
 	onDeleteConfirm: () => Promise<void>;
@@ -21,9 +24,11 @@ type ProcessesTableProps = {
 export function ProcessesTable({
 	processes,
 	downloadProcessId,
+	downloadMarkdownProcessId,
 	deleteProcessId,
 	pendingDeleteProcess,
 	onDownload,
+	onDownloadMarkdown,
 	onRequestDelete,
 	onDeleteConfirmOpenChange,
 	onDeleteConfirm,
@@ -107,6 +112,21 @@ export function ProcessesTable({
 													{downloadProcessId === process.id
 														? "Downloading..."
 														: "ZIP"}
+												</Button>
+											) : null}
+											{process.status === "completed" ? (
+												<Button
+													size="1"
+													color="orange"
+													variant="soft"
+													className="rounded-full"
+													onClick={() => void onDownloadMarkdown(process.id)}
+													disabled={downloadMarkdownProcessId === process.id}
+												>
+													<DocumentTextIcon width={16} height={16} />
+													{downloadMarkdownProcessId === process.id
+														? "Downloading..."
+														: "MD"}
 												</Button>
 											) : null}
 											<Button

@@ -4,6 +4,7 @@ export const processStatusStageSchema = z.enum([
 	"split_pdf",
 	"transcribe_page",
 	"post_process_page",
+	"process_finalizing",
 	"process_completed",
 	"process_failed",
 ]);

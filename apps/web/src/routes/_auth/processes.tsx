@@ -30,12 +30,14 @@ function ProcessesPage() {
 	const {
 		isUploading,
 		downloadProcessId,
+		downloadMarkdownProcessId,
 		deleteProcessId,
 		actionError,
 		pendingDeleteProcess,
 		setPendingDeleteProcess,
 		upload,
 		download,
+		downloadMarkdown,
 		requestDelete,
 		confirmDelete,
 	} = useProcessActions();
@@ -178,9 +180,11 @@ function ProcessesPage() {
 					<ProcessesTable
 						processes={processes}
 						downloadProcessId={downloadProcessId}
+						downloadMarkdownProcessId={downloadMarkdownProcessId}
 						deleteProcessId={deleteProcessId}
 						pendingDeleteProcess={pendingDeleteProcess}
 						onDownload={download}
+						onDownloadMarkdown={downloadMarkdown}
 						onRequestDelete={requestDelete}
 						onDeleteConfirmOpenChange={(open) => {
 							if (!open) setPendingDeleteProcess(null);

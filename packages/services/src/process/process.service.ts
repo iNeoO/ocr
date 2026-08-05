@@ -1,10 +1,22 @@
 import { randomUUID } from "node:crypto";
+import type { BuildZipPublisher } from "@ocr/build-zip-worker/publisher";
 import { APP_ERROR } from "@ocr/common";
 import { type Database, schema } from "@ocr/db";
 import { getLoggerStore, InternalError } from "@ocr/infra";
+import type { MergeMarkdownPublisher } from "@ocr/merge-markdown-worker/publisher";
 import type { SplitPdfPublisher } from "@ocr/split-pdf-worker/publisher";
 import type { TranscribeJpgPublisher } from "@ocr/transcribe-jpg-worker/publisher";
-import { and, asc, count, desc, eq, gte, lt } from "drizzle-orm";
+import {
+	and,
+	asc,
+	count,
+	desc,
+	eq,
+	gte,
+	lt,
+	notInArray,
+	sql,
+} from "drizzle-orm";
 import JSZip from "jszip";
 import type { FilesService } from "../files/files.service.js";
 import type {
@@ -22,6 +34,8 @@ type ProcessServiceDependencies = {
 	filesService: FilesService;
 	splitPdfPublisher?: SplitPdfPublisher;
 	transcribeJpgPublisher?: TranscribeJpgPublisher;
+	buildZipPublisher?: BuildZipPublisher;
+	mergeMarkdownPublisher?: MergeMarkdownPublisher;
 	processStatusPubSubService?: ProcessStatusPubSubService;
 };
 
@@ -32,6 +46,8 @@ export class ProcessService {
 	private readonly filesService: FilesService;
 	private readonly splitPdfPublisher?: SplitPdfPublisher;
 	private readonly transcribeJpgPublisher?: TranscribeJpgPublisher;
+	private readonly buildZipPublisher?: BuildZipPublisher;
+	private readonly mergeMarkdownPublisher?: MergeMarkdownPublisher;
 	private readonly processStatusPubSubService?: ProcessStatusPubSubService;
 
 	constructor({
@@ -39,12 +55,16 @@ export class ProcessService {
 		filesService,
 		splitPdfPublisher,
 		transcribeJpgPublisher,
+		buildZipPublisher,
+		mergeMarkdownPublisher,
 		processStatusPubSubService,
 	}: ProcessServiceDependencies) {
 		this.db = db;
 		this.filesService = filesService;
 		this.splitPdfPublisher = splitPdfPublisher;
 		this.transcribeJpgPublisher = transcribeJpgPublisher;
+		this.buildZipPublisher = buildZipPublisher;
+		this.mergeMarkdownPublisher = mergeMarkdownPublisher;
 		this.processStatusPubSubService = processStatusPubSubService;
 	}
 
@@ -121,6 +141,22 @@ export class ProcessService {
 		return process;
 	}
 
+	async getProcessForUser(processId: string, userId: string) {
+		const process = await this.db.query.process.findFirst({
+			where: (process, { and, eq }) =>
+				and(eq(process.id, processId), eq(process.userId, userId)),
+		});
+
+		if (!process) {
+			throw new InternalError({
+				code: APP_ERROR.PROCESS_NOT_FOUND,
+				message: "Process not found",
+			});
+		}
+
+		return process;
+	}
+
 	async getProcessNotificationContextByProcessId(
 		processId: string,
 	): Promise<ProcessNotificationContext> {
@@ -174,6 +210,28 @@ export class ProcessService {
 		});
 	}
 
+	/**
+	 * Counts processes stuck in `finalizing` longer than expected — a lost
+	 * AMQP message (crash before the handler's catch, misrouted queue) is the
+	 * only way this happens, given no retry/DLQ. Feeds a monitoring gauge
+	 * rather than an automated fix, since there is deliberately no retry logic
+	 * for this stage.
+	 */
+	async countStaleFinalizingProcesses(olderThanMs: number) {
+		const cutoff = new Date(Date.now() - olderThanMs);
+		const [result] = await this.db
+			.select({ value: count() })
+			.from(schema.process)
+			.where(
+				and(
+					eq(schema.process.status, "finalizing"),
+					lt(schema.process.updatedAt, cutoff),
+				),
+			);
+
+		return Number(result?.value ?? 0);
+	}
+
 	async getProcessesByUserId(userId: string) {
 		const processes = await this.db
 			.select({
@@ -213,7 +271,7 @@ export class ProcessService {
 			});
 		}
 
-		if (process.status !== "completed") {
+		if (process.status !== "finalizing") {
 			throw new InternalError({
 				code: APP_ERROR.PROCESS_NOT_COMPLETED,
 				message: "Process is not completed yet",
@@ -305,6 +363,7 @@ export class ProcessService {
 		const fileIds = [
 			process.sourceFileId,
 			process.zipFileId,
+			process.mergedMdFileId,
 			...pages.flatMap((page) => [page.imageFileId, page.markdownFileId]),
 		].filter((fileId): fileId is string => Boolean(fileId));
 
@@ -498,24 +557,188 @@ export class ProcessService {
 		}
 	}
 
-	async completeProcess(processId: string, completedPages: number) {
-		const previousProcess = await this.getProcessById(processId);
+	/**
+	 * Moves a process from the per-page pipeline into the "finalizing" stage,
+	 * then fans out to the two independent post-completion workers (zip,
+	 * merged markdown). Guarded on the current status rather than pre-read: two
+	 * near-simultaneous "last page done" observations from `syncProcessProgress`
+	 * could otherwise both pass a plain check and both trigger the fan-out
+	 * twice. Only the call whose UPDATE actually matches a row proceeds to
+	 * notify and publish — the other is a silent no-op.
+	 */
+	async finalizeProcess(processId: string, completedPages: number) {
 		const now = new Date();
 		const [updatedProcess] = await this.db
 			.update(schema.process)
 			.set({
-				status: "completed",
+				status: "finalizing",
 				isRunning: false,
 				completedPages,
-				completedAt: now,
 				error: null,
 				errorAt: null,
 				updatedAt: now,
 			})
-			.where(eq(schema.process.id, processId))
+			.where(
+				and(
+					eq(schema.process.id, processId),
+					notInArray(schema.process.status, [
+						"finalizing",
+						"completed",
+						"failed",
+					]),
+				),
+			)
 			.returning();
 
-		if (previousProcess?.status !== "completed") {
+		if (!updatedProcess) {
+			return updatedProcess;
+		}
+
+		await this.publishProcessStatusEvent({
+			processId,
+			stage: "process_finalizing",
+			status: "success",
+			durationMs: 0,
+			message: "Process finalizing",
+		});
+
+		await this.buildZipPublisher?.publish({ processId });
+		await this.mergeMarkdownPublisher?.publish({ processId });
+
+		return updatedProcess;
+	}
+
+	/**
+	 * Builds the per-page-markdown zip and persists it, then reports readiness
+	 * via {@link markZipReady}. Called end-to-end from `build-zip-worker`'s
+	 * handler so the worker never has to reach into `FilesService` directly.
+	 */
+	async finalizeZip(processId: string, userId: string) {
+		const archive = await this.buildProcessMarkdownZip(processId, userId);
+		const now = new Date();
+		const zipFileId = await this.filesService.createProcessZipFile({
+			processId,
+			buffer: archive.buffer,
+			filename: archive.filename,
+			now,
+		});
+
+		return this.markZipReady(processId, zipFileId);
+	}
+
+	/**
+	 * Concatenates every page's markdown into one file and persists it, then
+	 * reports readiness via {@link markMergedMdReady}. Called end-to-end from
+	 * `merge-markdown-worker`'s handler.
+	 */
+	async mergeProcessMarkdown(processId: string) {
+		const process = await this.getProcessById(processId);
+		if (!process) {
+			throw new InternalError({
+				code: APP_ERROR.PROCESS_NOT_FOUND,
+				message: "Process not found",
+			});
+		}
+
+		if (process.status !== "finalizing") {
+			throw new InternalError({
+				code: APP_ERROR.PROCESS_NOT_COMPLETED,
+				message: "Process is not completed yet",
+			});
+		}
+
+		const processSourceFile = await this.db
+			.select({
+				sourceFileName: schema.file.filename,
+			})
+			.from(schema.process)
+			.innerJoin(schema.file, eq(schema.process.sourceFileId, schema.file.id))
+			.where(eq(schema.process.id, processId))
+			.limit(1)
+			.then((rows) => rows[0]);
+
+		if (!processSourceFile) {
+			throw new InternalError({
+				code: APP_ERROR.PROCESS_SOURCE_FILE_NOT_FOUND,
+				message: "Source file not found",
+			});
+		}
+
+		const pages = await this.db
+			.select({
+				pageNumber: schema.page.pageNumber,
+				markdownFileId: schema.page.markdownFileId,
+			})
+			.from(schema.page)
+			.where(eq(schema.page.processId, processId))
+			.orderBy(asc(schema.page.pageNumber));
+
+		const pageContents: string[] = [];
+		for (const page of pages) {
+			if (!page.markdownFileId) {
+				throw new InternalError({
+					code: APP_ERROR.PROCESS_OUTPUT_INCOMPLETE,
+					message: "Process output is incomplete",
+				});
+			}
+
+			pageContents.push(
+				await this.filesService.getFileText(page.markdownFileId),
+			);
+		}
+
+		const now = new Date();
+		const mergedMdFileId = await this.filesService.createProcessMarkdownFile({
+			processId,
+			content: pageContents.join("\n\n"),
+			filename: `${processSourceFile.sourceFileName.replace(/\.[^.]+$/, "")}.md`,
+			now,
+		});
+
+		return this.markMergedMdReady(processId, mergedMdFileId);
+	}
+
+	/**
+	 * Atomic, conditional completion of one of the two parallel finalization
+	 * treatments. A single `UPDATE ... WHERE status = 'finalizing'` statement
+	 * both writes this artifact's file id and resolves `status` in the same
+	 * pass via a `CASE` on the *other* artifact's field — whichever of the two
+	 * calls (this one or {@link markMergedMdReady}) runs second is guaranteed
+	 * by Postgres to see the first one's already-committed write, so exactly
+	 * one of them transitions the row to `completed`. The `CASE` branches are
+	 * cast `::process_status` explicitly: Postgres resolves an all-string-
+	 * literal `CASE` to `text` by default, which does not implicitly coerce to
+	 * an enum column. The `WHERE status = 'finalizing'` guard also makes this a
+	 * no-op if the process already moved to `failed`, so a late success can
+	 * never overwrite a failure.
+	 */
+	async markZipReady(processId: string, zipFileId: string) {
+		const now = new Date();
+		const [updatedProcess] = await this.db
+			.update(schema.process)
+			.set({
+				zipFileId,
+				status: sql`CASE WHEN ${schema.process.mergedMdFileId} IS NOT NULL THEN 'completed' ELSE 'finalizing' END::process_status`,
+				completedAt: sql`CASE WHEN ${schema.process.mergedMdFileId} IS NOT NULL THEN ${now} ELSE ${schema.process.completedAt} END`,
+				updatedAt: now,
+			})
+			.where(
+				and(
+					eq(schema.process.id, processId),
+					eq(schema.process.status, "finalizing"),
+				),
+			)
+			.returning();
+
+		if (!updatedProcess) {
+			getLoggerStore().info(
+				{ processId },
+				"markZipReady: process already resolved (completed or failed), skipping",
+			);
+			return updatedProcess;
+		}
+
+		if (updatedProcess.status === "completed") {
 			await this.publishProcessStatusEvent({
 				processId,
 				stage: "process_completed",
@@ -524,6 +747,91 @@ export class ProcessService {
 				message: "Process completed",
 			});
 		}
+
+		return updatedProcess;
+	}
+
+	/** Mirrors {@link markZipReady} for the merged-markdown artifact. */
+	async markMergedMdReady(processId: string, mergedMdFileId: string) {
+		const now = new Date();
+		const [updatedProcess] = await this.db
+			.update(schema.process)
+			.set({
+				mergedMdFileId,
+				status: sql`CASE WHEN ${schema.process.zipFileId} IS NOT NULL THEN 'completed' ELSE 'finalizing' END::process_status`,
+				completedAt: sql`CASE WHEN ${schema.process.zipFileId} IS NOT NULL THEN ${now} ELSE ${schema.process.completedAt} END`,
+				updatedAt: now,
+			})
+			.where(
+				and(
+					eq(schema.process.id, processId),
+					eq(schema.process.status, "finalizing"),
+				),
+			)
+			.returning();
+
+		if (!updatedProcess) {
+			getLoggerStore().info(
+				{ processId },
+				"markMergedMdReady: process already resolved (completed or failed), skipping",
+			);
+			return updatedProcess;
+		}
+
+		if (updatedProcess.status === "completed") {
+			await this.publishProcessStatusEvent({
+				processId,
+				stage: "process_completed",
+				status: "success",
+				durationMs: 0,
+				message: "Process completed",
+			});
+		}
+
+		return updatedProcess;
+	}
+
+	/**
+	 * Symmetric with {@link markZipReady}/{@link markMergedMdReady}: guarded on
+	 * `status = 'finalizing'` so whichever of (a worker failing) or (the other
+	 * worker succeeding) lands first wins, and a late arrival from the other
+	 * side can never overwrite it.
+	 */
+	async failFinalization(processId: string, error: string) {
+		const now = new Date();
+		const [updatedProcess] = await this.db
+			.update(schema.process)
+			.set({
+				status: "failed",
+				isRunning: false,
+				error,
+				errorAt: now,
+				completedAt: null,
+				updatedAt: now,
+			})
+			.where(
+				and(
+					eq(schema.process.id, processId),
+					eq(schema.process.status, "finalizing"),
+				),
+			)
+			.returning();
+
+		if (!updatedProcess) {
+			getLoggerStore().info(
+				{ processId },
+				"failFinalization: process already resolved, skipping",
+			);
+			return updatedProcess;
+		}
+
+		await this.publishProcessStatusEvent({
+			processId,
+			stage: "process_failed",
+			status: "failed",
+			durationMs: 0,
+			message: error,
+		});
 
 		return updatedProcess;
 	}

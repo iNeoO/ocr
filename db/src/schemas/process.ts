@@ -26,6 +26,9 @@ export const process = pgTable("process", {
 	zipFileId: t
 		.text("zip_file_id")
 		.references(() => file.id, { onDelete: "set null" }),
+	mergedMdFileId: t
+		.text("merged_md_file_id")
+		.references(() => file.id, { onDelete: "set null" }),
 	status: processStatus("status").notNull().default("pending"),
 	isRunning: t.boolean("is_running").notNull().default(false),
 	pageCount: t.integer("page_count").notNull().default(0),
