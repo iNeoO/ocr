@@ -263,17 +263,7 @@ export class ProcessService {
 	}
 
 	async buildProcessMarkdownZip(processId: string, userId: string) {
-		const process = await this.db.query.process.findFirst({
-			where: (process, { and, eq }) =>
-				and(eq(process.id, processId), eq(process.userId, userId)),
-		});
-
-		if (!process) {
-			throw new InternalError({
-				code: APP_ERROR.PROCESS_NOT_FOUND,
-				message: "Process not found",
-			});
-		}
+		const process = await this.getProcessForUser(processId, userId);
 
 		if (process.status !== "finalizing") {
 			throw new InternalError({
