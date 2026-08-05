@@ -1,4 +1,8 @@
-import { type ProcessStatusEvent, processStatusEventSchema } from "@ocr/common";
+import {
+	type ProcessStatusEvent,
+	type ProcessStatusStage,
+	processStatusEventSchema,
+} from "@ocr/common";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 import { processesQueryKey } from "../../libs/api/processes";
@@ -8,6 +12,12 @@ import { useToast } from "../toast/ToastProvider";
 const PROCESS_STATUS_STREAM_URL = "/api/processes/status";
 const PROCESS_TABLE_REFRESH_DEBOUNCE_MS = 750;
 const SEEN_EVENT_KEYS_LIMIT = 250;
+
+const PAGE_PROGRESS_STAGES: ReadonlySet<ProcessStatusStage> = new Set([
+	"transcribe_page",
+	"post_process_page",
+]);
+const PAGE_PROGRESS_DEBOUNCE_MS = 500;
 
 const formatDuration = (durationMs: number) => {
 	if (durationMs < 1000) {
@@ -26,7 +36,13 @@ const formatDuration = (durationMs: number) => {
 
 const formatProcessStatusToast = (event: ProcessStatusEvent) => ({
 	title: `${event.sourceFileName} update`,
-	description: `${event.processName} • ${event.message} in ${formatDuration(event.durationMs)}`,
+	description: `${event.message} in ${formatDuration(event.durationMs)}`,
+});
+
+const formatPageProgressToast = (event: ProcessStatusEvent) => ({
+	key: `pages:${event.processId}`,
+	title: `${event.sourceFileName} processing`,
+	description: `${event.completedPages}/${event.pageCount} pages processed`,
 });
 
 export function useProcessStatusSubscription() {
@@ -35,6 +51,12 @@ export function useProcessStatusSubscription() {
 	const seenEventsRef = useRef<Set<string>>(new Set());
 	const seenEventKeysOrderRef = useRef<string[]>([]);
 	const invalidateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const pendingPageProgressRef = useRef<Map<string, ProcessStatusEvent>>(
+		new Map(),
+	);
+	const pageProgressTimersRef = useRef<
+		Map<string, ReturnType<typeof setTimeout>>
+	>(new Map());
 
 	useEffect(() => {
 		const scheduleTableRefresh = () => {
@@ -46,6 +68,26 @@ export function useProcessStatusSubscription() {
 				invalidateTimerRef.current = null;
 				void queryClient.invalidateQueries({ queryKey: processesQueryKey });
 			}, PROCESS_TABLE_REFRESH_DEBOUNCE_MS);
+		};
+
+		const schedulePageProgressToast = (event: ProcessStatusEvent) => {
+			pendingPageProgressRef.current.set(event.processId, event);
+
+			if (pageProgressTimersRef.current.has(event.processId)) {
+				return;
+			}
+
+			const timer = setTimeout(() => {
+				pageProgressTimersRef.current.delete(event.processId);
+				const latestEvent = pendingPageProgressRef.current.get(event.processId);
+				pendingPageProgressRef.current.delete(event.processId);
+
+				if (latestEvent) {
+					pushToast(formatPageProgressToast(latestEvent));
+				}
+			}, PAGE_PROGRESS_DEBOUNCE_MS);
+
+			pageProgressTimersRef.current.set(event.processId, timer);
 		};
 
 		const eventSource = new EventSource(PROCESS_STATUS_STREAM_URL);
@@ -82,7 +124,12 @@ export function useProcessStatusSubscription() {
 				}
 			}
 
-			pushToast(formatProcessStatusToast(event));
+			if (PAGE_PROGRESS_STAGES.has(event.stage)) {
+				schedulePageProgressToast(event);
+			} else {
+				pushToast(formatProcessStatusToast(event));
+			}
+
 			scheduleTableRefresh();
 		};
 
@@ -96,6 +143,12 @@ export function useProcessStatusSubscription() {
 			if (invalidateTimerRef.current) {
 				clearTimeout(invalidateTimerRef.current);
 			}
+
+			for (const timer of pageProgressTimersRef.current.values()) {
+				clearTimeout(timer);
+			}
+			pageProgressTimersRef.current.clear();
+			pendingPageProgressRef.current.clear();
 
 			eventSource.close();
 		};

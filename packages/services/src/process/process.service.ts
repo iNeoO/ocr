@@ -165,6 +165,8 @@ export class ProcessService {
 				processId: schema.process.id,
 				userId: schema.process.userId,
 				sourceFileName: schema.file.filename,
+				pageCount: schema.process.pageCount,
+				completedPages: schema.process.completedPages,
 			})
 			.from(schema.process)
 			.innerJoin(schema.file, eq(schema.process.sourceFileId, schema.file.id))
@@ -184,6 +186,8 @@ export class ProcessService {
 			processId: process.processId,
 			processName: process.processId,
 			sourceFileName: process.sourceFileName,
+			pageCount: process.pageCount,
+			completedPages: process.completedPages,
 		};
 	}
 

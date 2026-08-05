@@ -16,4 +16,6 @@ export type ProcessNotificationContext = {
 	processId: string;
 	processName: string;
 	sourceFileName: string;
+	pageCount: number;
+	completedPages: number;
 };

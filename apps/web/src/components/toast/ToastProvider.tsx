@@ -13,6 +13,7 @@ const MAX_TOASTS = 6;
 
 type Toast = {
 	id: string;
+	key?: string;
 	title: string;
 	description: string;
 };
@@ -29,11 +30,27 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
 	const value = useMemo<ToastContextValue>(
 		() => ({
-			pushToast: ({ title, description }) => {
-				const id = crypto.randomUUID();
-				setToasts((current) =>
-					[...current, { id, title, description }].slice(-MAX_TOASTS),
-				);
+			pushToast: ({ key, title, description }) => {
+				setToasts((current) => {
+					const existingIndex = key
+						? current.findIndex((toast) => toast.key === key)
+						: -1;
+
+					if (existingIndex !== -1) {
+						const next = [...current];
+						next[existingIndex] = {
+							...next[existingIndex],
+							title,
+							description,
+						};
+						return next;
+					}
+
+					const id = crypto.randomUUID();
+					return [...current, { id, key, title, description }].slice(
+						-MAX_TOASTS,
+					);
+				});
 			},
 			clearToasts: () => {
 				setToasts([]);

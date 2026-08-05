@@ -21,6 +21,8 @@ export const processStatusEventSchema = z.object({
 	durationMs: z.number(),
 	message: z.string(),
 	occurredAt: z.string(),
+	pageCount: z.number(),
+	completedPages: z.number(),
 });
 
 export type ProcessStatusEvent = z.infer<typeof processStatusEventSchema>;
