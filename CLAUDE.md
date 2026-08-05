@@ -138,11 +138,23 @@ per-operation Prometheus metrics, and decides disclosure. Input validation via
 use a server function (the SSE stream, downloads) must replicate that error policy
 by hand.
 
+**Errors.** Never `throw new Error` in `packages/*` or `workers/*`. Every error we raise
+ourselves is an `InternalError`
+([packages/infra/src/errors/internal-error.ts](packages/infra/src/errors/internal-error.ts))
+carrying a code from `APP_ERROR`
+([packages/common/src/app-error.ts](packages/common/src/app-error.ts)) plus a message
+written for a human. Add the code to `APP_ERROR`, then to `appErrorStatusCode` in
+[apps/web/src/libs/server/errors.ts](apps/web/src/libs/server/errors.ts) — that `Record`
+is exhaustive, so a new code does not compile until it has an HTTP status. Branch on
+`error.code` (`isInternalError`), never on a message or a raw status number.
+`better-auth`'s `APIError` is the one foreign error shape we still sniff (`isAPIError`),
+and only for auth flows.
+
 **Error disclosure.** ≥500 is logged and replaced with a generic message; 4xx messages
-are passed through because only deliberately-shaped errors (`better-auth`'s `APIError`,
-our `ServerError`) carry one. Errors crossing to the browser are serialized by seroval
-including `stack` and the whole `cause` chain — use `createClientSafeError` so nothing
-else leaks.
+are passed through because only deliberately-shaped errors (our `InternalError` mapped to
+a 4xx status, `better-auth`'s `APIError`, our `ServerError`) carry one. Errors crossing to
+the browser are serialized by seroval including `stack` and the whole `cause` chain — use
+`createClientSafeError` so nothing else leaks.
 
 **Metrics.** `/metrics` on the web app, all series prefixed `ocr_web_`. `route` is a
 bounded label set: add every new route to `KNOWN_ROUTES` in

@@ -4,8 +4,6 @@ import type { RedisClient } from "@ocr/infra/redis";
 import type { MailService } from "../mail/mail.service.js";
 import { type AppAuth, createAuth } from "./auth.js";
 
-export { APIError, isAPIError } from "better-auth/api";
-
 import type {
 	AuthServiceOptions,
 	GetSessionInput,

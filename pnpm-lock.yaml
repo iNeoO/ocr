@@ -213,6 +213,9 @@ importers:
       '@aws-sdk/client-s3':
         specifier: ^3.1026.0
         version: 3.1026.0
+      '@ocr/common':
+        specifier: workspace:*
+        version: link:../common
       amqplib:
         specifier: 'catalog:'
         version: 0.10.9

@@ -20,6 +20,10 @@
       "types": "./src/amqp/index.ts",
       "default": "./dist/amqp/index.js"
     },
+    "./errors": {
+      "types": "./src/errors/index.ts",
+      "default": "./dist/errors/index.js"
+    },
     "./libs": {
       "types": "./src/libs/index.ts",
       "default": "./dist/libs/index.js"
@@ -44,6 +48,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1026.0",
+    "@ocr/common": "workspace:*",
     "amqplib": "catalog:",
     "pino": "^10.3.1",
     "pino-pretty": "^13.1.3",

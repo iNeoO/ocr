@@ -4,8 +4,9 @@ import {
 	GetObjectCommand,
 	PutObjectCommand,
 } from "@aws-sdk/client-s3";
+import { APP_ERROR } from "@ocr/common";
 import { type Database, schema } from "@ocr/db";
-import { getLoggerStore } from "@ocr/infra";
+import { getLoggerStore, InternalError } from "@ocr/infra";
 import { s3, s3Config } from "@ocr/infra/s3";
 import { eq, inArray } from "drizzle-orm";
 import { PDFParse } from "pdf-parse";
@@ -65,7 +66,10 @@ export class FilesService {
 	async getFileBuffer(fileId: string) {
 		const file = await this.getFileById(fileId);
 		if (!file) {
-			throw new Error("File not found");
+			throw new InternalError({
+				code: APP_ERROR.FILE_NOT_FOUND,
+				message: "File not found",
+			});
 		}
 
 		const response = await s3.send(
@@ -76,7 +80,10 @@ export class FilesService {
 		);
 
 		if (!response.Body) {
-			throw new Error("File content not found in S3");
+			throw new InternalError({
+				code: APP_ERROR.FILE_CONTENT_NOT_FOUND,
+				message: "File content not found in S3",
+			});
 		}
 
 		return response.Body.transformToByteArray();
@@ -90,7 +97,10 @@ export class FilesService {
 	async replaceFileContent(fileId: string, content: string | Uint8Array) {
 		const file = await this.getFileById(fileId);
 		if (!file) {
-			throw new Error("File not found");
+			throw new InternalError({
+				code: APP_ERROR.FILE_NOT_FOUND,
+				message: "File not found",
+			});
 		}
 
 		const body =
@@ -194,7 +204,10 @@ export class FilesService {
 	async splitFileIntoPages(fileId: string) {
 		const file = await this.getFileById(fileId);
 		if (!file) {
-			throw new Error("File not found");
+			throw new InternalError({
+				code: APP_ERROR.FILE_NOT_FOUND,
+				message: "File not found",
+			});
 		}
 
 		const response = await s3.send(
@@ -205,7 +218,10 @@ export class FilesService {
 		);
 
 		if (!response.Body) {
-			throw new Error("File content not found in S3");
+			throw new InternalError({
+				code: APP_ERROR.FILE_CONTENT_NOT_FOUND,
+				message: "File content not found in S3",
+			});
 		}
 
 		const bytes = await response.Body.transformToByteArray();
@@ -263,9 +279,17 @@ export class FilesService {
 			logger.error({ err: error }, "Error splitting PDF into pages");
 			if (!isCleanedUp) {
 				await parser.destroy();
-				throw new Error("File error during PDF parsing and cleanup");
+				throw new InternalError({
+					code: APP_ERROR.FILE_PDF_SPLIT_FAILED,
+					message: "File error during PDF parsing and cleanup",
+					cause: error,
+				});
 			}
-			throw new Error("File error during PDF upload");
+			throw new InternalError({
+				code: APP_ERROR.FILE_PDF_SPLIT_FAILED,
+				message: "File error during PDF upload",
+				cause: error,
+			});
 		}
 	}
 }

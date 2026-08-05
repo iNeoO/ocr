@@ -1,4 +1,6 @@
+import { APP_ERROR } from "@ocr/common";
 import amqp, { type Channel, type ConsumeMessage } from "amqplib";
+import { InternalError } from "../errors/internal-error.js";
 import { pinoLogger } from "../libs/index.js";
 
 type AmqpConnection = Awaited<ReturnType<typeof amqp.connect>>;
@@ -234,7 +236,10 @@ export const startResilientConsumer = ({
 			activeChannel !== configuredChannel
 		) {
 			await dropActiveConnection();
-			throw new Error("AMQP resources closed while configuring the consumer");
+			throw new InternalError({
+				code: APP_ERROR.AMQP_CONSUMER_SETUP_FAILED,
+				message: "AMQP resources closed while configuring the consumer",
+			});
 		}
 
 		status = "running";

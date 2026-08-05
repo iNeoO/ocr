@@ -1,8 +1,8 @@
 import { existsSync } from "node:fs";
 import path from "node:path";
-import type { ProcessStatusStage } from "@ocr/common";
+import { APP_ERROR, type ProcessStatusStage } from "@ocr/common";
 import { type Database, schema } from "@ocr/db";
-import { getLoggerStore } from "@ocr/infra";
+import { getLoggerStore, InternalError } from "@ocr/infra";
 import type { PostProcessPagePublisher } from "@ocr/post-process-page-worker/publisher";
 import { count, eq, sql } from "drizzle-orm";
 import { createWorker } from "tesseract.js";
@@ -120,7 +120,10 @@ export class PageService {
 	}) {
 		const page = await this.getPageById(pageId);
 		if (!page) {
-			throw new Error("Page not found");
+			throw new InternalError({
+				code: APP_ERROR.PAGE_NOT_FOUND,
+				message: "Page not found",
+			});
 		}
 
 		await this.processService.publishProcessStatusEvent({
@@ -136,11 +139,17 @@ export class PageService {
 		const logger = getLoggerStore();
 		const page = await this.getPageById(pageId);
 		if (!page) {
-			throw new Error("Page not found");
+			throw new InternalError({
+				code: APP_ERROR.PAGE_NOT_FOUND,
+				message: "Page not found",
+			});
 		}
 
 		if (!page.imageFileId) {
-			throw new Error("Page image file not found");
+			throw new InternalError({
+				code: APP_ERROR.PAGE_IMAGE_FILE_MISSING,
+				message: "Page image file not found",
+			});
 		}
 
 		const nativeText = page.markdownFileId
@@ -170,7 +179,10 @@ export class PageService {
 		try {
 			const image = await this.filesService.getFileById(page.imageFileId);
 			if (!image) {
-				throw new Error("Page image record not found");
+				throw new InternalError({
+					code: APP_ERROR.PAGE_IMAGE_FILE_NOT_FOUND,
+					message: "Page image record not found",
+				});
 			}
 			logger.info(
 				{
@@ -291,19 +303,31 @@ export class PageService {
 		const logger = getLoggerStore();
 		const page = await this.getPageById(pageId);
 		if (!page) {
-			throw new Error("Page not found");
+			throw new InternalError({
+				code: APP_ERROR.PAGE_NOT_FOUND,
+				message: "Page not found",
+			});
 		}
 
 		if (!page.imageFileId) {
-			throw new Error("Page image file not found");
+			throw new InternalError({
+				code: APP_ERROR.PAGE_IMAGE_FILE_MISSING,
+				message: "Page image file not found",
+			});
 		}
 
 		if (!page.markdownFileId) {
-			throw new Error("Page markdown file not found");
+			throw new InternalError({
+				code: APP_ERROR.PAGE_MARKDOWN_FILE_MISSING,
+				message: "Page markdown file not found",
+			});
 		}
 
 		if (!this.llmService) {
-			throw new Error("LLM service not configured");
+			throw new InternalError({
+				code: APP_ERROR.LLM_SERVICE_NOT_CONFIGURED,
+				message: "LLM service not configured",
+			});
 		}
 
 		await this.updatePageStatus({

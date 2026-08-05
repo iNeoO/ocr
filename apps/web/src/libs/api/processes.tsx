@@ -1,4 +1,6 @@
+import { APP_ERROR } from "@ocr/common";
 import { pinoLogger } from "@ocr/infra";
+import { isInternalError } from "@ocr/infra/errors";
 import { queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
@@ -6,7 +8,6 @@ import { zfd } from "zod-form-data";
 import { parseContentDispositionFilename } from "../http/content-disposition";
 import { container } from "../server/container";
 import { withServerErrorLogging } from "../server/error-handling";
-import { toServerError } from "../server/errors";
 import { countOrphanedFileCleanup, countUpload } from "../server/metrics";
 import { requireUser } from "../server/session";
 
@@ -64,9 +65,6 @@ export const processesQueryOptions = () =>
 		queryFn: () => getProcessesByUserId(),
 	});
 
-/** The only 429 an upload can produce is the per-user daily process limit. */
-const TOO_MANY_REQUESTS = 429;
-
 /**
  * Compensates a failed process creation by removing the object that was
  * already pushed to S3. Never throws: the caller is on its way to rethrowing
@@ -118,7 +116,8 @@ export const uploadProcessFile = createServerFn({ method: "POST" })
 					}
 				} catch (error) {
 					countUpload(
-						toServerError(error).statusCode === TOO_MANY_REQUESTS
+						isInternalError(error) &&
+							error.code === APP_ERROR.PROCESS_DAILY_LIMIT_REACHED
 							? "rejected_daily_limit"
 							: "failed",
 					);

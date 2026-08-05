@@ -1,9 +1,9 @@
 import { randomUUID } from "node:crypto";
+import { APP_ERROR } from "@ocr/common";
 import { type Database, schema } from "@ocr/db";
-import { getLoggerStore } from "@ocr/infra";
+import { getLoggerStore, InternalError } from "@ocr/infra";
 import type { SplitPdfPublisher } from "@ocr/split-pdf-worker/publisher";
 import type { TranscribeJpgPublisher } from "@ocr/transcribe-jpg-worker/publisher";
-import { APIError } from "better-auth/api";
 import { and, asc, count, desc, eq, gte, lt } from "drizzle-orm";
 import JSZip from "jszip";
 import type { FilesService } from "../files/files.service.js";
@@ -83,7 +83,8 @@ export class ProcessService {
 		const processCountToday = Number(result?.value ?? 0);
 
 		if (processCountToday >= ProcessService.DAILY_PROCESS_LIMIT) {
-			throw new APIError("TOO_MANY_REQUESTS", {
+			throw new InternalError({
+				code: APP_ERROR.PROCESS_DAILY_LIMIT_REACHED,
 				message:
 					"Daily upload limit reached. You can delete a completed or failed process to free a slot.",
 			});
@@ -136,7 +137,10 @@ export class ProcessService {
 			.then((rows) => rows[0]);
 
 		if (!process) {
-			throw new Error("Process not found");
+			throw new InternalError({
+				code: APP_ERROR.PROCESS_NOT_FOUND,
+				message: "Process not found",
+			});
 		}
 
 		return {
@@ -203,13 +207,15 @@ export class ProcessService {
 		});
 
 		if (!process) {
-			throw new APIError("NOT_FOUND", {
+			throw new InternalError({
+				code: APP_ERROR.PROCESS_NOT_FOUND,
 				message: "Process not found",
 			});
 		}
 
 		if (process.status !== "completed") {
-			throw new APIError("CONFLICT", {
+			throw new InternalError({
+				code: APP_ERROR.PROCESS_NOT_COMPLETED,
 				message: "Process is not completed yet",
 			});
 		}
@@ -225,7 +231,8 @@ export class ProcessService {
 			.then((rows) => rows[0]);
 
 		if (!processSourceFile) {
-			throw new APIError("NOT_FOUND", {
+			throw new InternalError({
+				code: APP_ERROR.PROCESS_SOURCE_FILE_NOT_FOUND,
 				message: "Source file not found",
 			});
 		}
@@ -243,7 +250,8 @@ export class ProcessService {
 
 		for (const page of pages) {
 			if (!page.markdownFileId) {
-				throw new APIError("CONFLICT", {
+				throw new InternalError({
+					code: APP_ERROR.PROCESS_OUTPUT_INCOMPLETE,
 					message: "Process output is incomplete",
 				});
 			}
@@ -273,13 +281,15 @@ export class ProcessService {
 		});
 
 		if (!process) {
-			throw new APIError("NOT_FOUND", {
+			throw new InternalError({
+				code: APP_ERROR.PROCESS_NOT_FOUND,
 				message: "Process not found",
 			});
 		}
 
 		if (process.status !== "completed" && process.status !== "failed") {
-			throw new APIError("CONFLICT", {
+			throw new InternalError({
+				code: APP_ERROR.PROCESS_NOT_DELETABLE,
 				message: "Process can only be deleted when completed or failed",
 			});
 		}
@@ -379,7 +389,10 @@ export class ProcessService {
 	async splitSourceFileIntoPages(processId: string) {
 		const process = await this.getProcessById(processId);
 		if (!process) {
-			throw new Error("Process not found");
+			throw new InternalError({
+				code: APP_ERROR.PROCESS_NOT_FOUND,
+				message: "Process not found",
+			});
 		}
 
 		const startedAt = process.startedAt ?? new Date();

@@ -1,0 +1,28 @@
+/**
+ * Every error our own code throws deliberately. The code is the stable
+ * identity: it is what the web layer maps to an HTTP status, and what callers
+ * branch on instead of matching on a message or a status number.
+ *
+ * Authentication errors are not here — those come out of `better-auth` as its
+ * own `APIError` and already carry a status (see `isAPIError`).
+ */
+export const APP_ERROR = {
+	PROCESS_DAILY_LIMIT_REACHED: "PROCESS_DAILY_LIMIT_REACHED",
+	PROCESS_NOT_FOUND: "PROCESS_NOT_FOUND",
+	PROCESS_NOT_COMPLETED: "PROCESS_NOT_COMPLETED",
+	PROCESS_NOT_DELETABLE: "PROCESS_NOT_DELETABLE",
+	PROCESS_OUTPUT_INCOMPLETE: "PROCESS_OUTPUT_INCOMPLETE",
+	PROCESS_SOURCE_FILE_NOT_FOUND: "PROCESS_SOURCE_FILE_NOT_FOUND",
+	FILE_NOT_FOUND: "FILE_NOT_FOUND",
+	FILE_CONTENT_NOT_FOUND: "FILE_CONTENT_NOT_FOUND",
+	FILE_PDF_SPLIT_FAILED: "FILE_PDF_SPLIT_FAILED",
+	PAGE_NOT_FOUND: "PAGE_NOT_FOUND",
+	PAGE_IMAGE_FILE_MISSING: "PAGE_IMAGE_FILE_MISSING",
+	PAGE_IMAGE_FILE_NOT_FOUND: "PAGE_IMAGE_FILE_NOT_FOUND",
+	PAGE_MARKDOWN_FILE_MISSING: "PAGE_MARKDOWN_FILE_MISSING",
+	LLM_SERVICE_NOT_CONFIGURED: "LLM_SERVICE_NOT_CONFIGURED",
+	LOGGER_STORE_MISSING: "LOGGER_STORE_MISSING",
+	AMQP_CONSUMER_SETUP_FAILED: "AMQP_CONSUMER_SETUP_FAILED",
+} as const;
+
+export type AppErrorCode = (typeof APP_ERROR)[keyof typeof APP_ERROR];

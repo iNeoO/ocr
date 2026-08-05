@@ -1,9 +1,9 @@
-import { isAPIError } from "@ocr/common";
 import { pinoLogger } from "@ocr/infra";
 import { createFileRoute } from "@tanstack/react-router";
 import { getSession } from "../../../libs/api/auth";
 import { buildContentDispositionAttachment } from "../../../libs/http/content-disposition";
 import { container } from "../../../libs/server/container";
+import { toServerError } from "../../../libs/server/errors";
 import {
 	countDownload,
 	observeDownloadArchiveSize,
@@ -59,31 +59,30 @@ export const Route = createFileRoute("/downloads/processes/$id")({
 						},
 					});
 				} catch (error) {
-					if (isAPIError(error)) {
-						countDownload("rejected");
-						pinoLogger.warn(
-							{
-								err: error,
-								processId: params.id,
-								statusCode: error.statusCode,
-							},
-							"Process download rejected",
+					// This handler does not go through a server function, so it
+					// replicates the disclosure policy of `withServerErrorLogging` by
+					// hand: a 4xx message was deliberately written for the user,
+					// anything else becomes a generic 500.
+					const { statusCode, message } = toServerError(error);
+
+					if (statusCode >= 500) {
+						countDownload("failed");
+						pinoLogger.error(
+							{ err: error, processId: params.id },
+							"Process download failed",
 						);
 						return Response.json(
-							{ message: error.message },
-							{ status: error.statusCode },
+							{ message: "Internal server error" },
+							{ status: 500 },
 						);
 					}
 
-					countDownload("failed");
-					pinoLogger.error(
-						{ err: error, processId: params.id },
-						"Process download failed",
+					countDownload("rejected");
+					pinoLogger.warn(
+						{ err: error, processId: params.id, statusCode },
+						"Process download rejected",
 					);
-					return Response.json(
-						{ message: "Internal server error" },
-						{ status: 500 },
-					);
+					return Response.json({ message }, { status: statusCode });
 				}
 			},
 		},
