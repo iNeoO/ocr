@@ -16,8 +16,7 @@ import {
 	getSession,
 	sessionQueryKey,
 } from "../libs/api/auth";
-
-import appCss from "../styles.css?url";
+import "../styles.css";
 
 interface RouterContext {
 	session: AuthSession | null;
@@ -63,12 +62,6 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 			},
 			{
 				title: "OCR",
-			},
-		],
-		links: [
-			{
-				rel: "stylesheet",
-				href: appCss,
 			},
 		],
 	}),
