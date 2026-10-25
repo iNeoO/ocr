@@ -62,12 +62,19 @@ export const createAuth = ({
 		emailAndPassword: {
 			enabled: true,
 			requireEmailVerification: true,
-			sendResetPassword: ({ user, url: resetPasswordUrl }) =>
-				mailService.sendResetPasswordEmail({
+			sendResetPassword: ({ user, url: resetPasswordUrl, token }) => {
+				const webResetPasswordUrl = new URL(
+					"/reset-password",
+					url ?? resetPasswordUrl,
+				);
+				webResetPasswordUrl.searchParams.set("token", token);
+
+				return mailService.sendResetPasswordEmail({
 					to: user.email,
 					name: user.name,
-					url: resetPasswordUrl,
-				}),
+					url: webResetPasswordUrl.toString(),
+				});
+			},
 		},
 		database: drizzleAdapter(db, {
 			provider: "pg",
